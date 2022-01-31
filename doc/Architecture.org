@@ -1,0 +1,222 @@
+
+* Introduction
+
+
+the whole purpose of this system is to have distributed video and audio encoding, decoding and filtering.
+
+The system operates by having master node and shared storage for data and other worker nodes to do processing with master node.
+  
+* Use cases
+
+the usage of the system would be as follows:
+
+#+begin_src bash
+  disttranscode --input location --filter f1 param1 param2 --filter f2 param1 param2 output-location
+#+end_src
+
+and available filters which can be applied would be:
+
++ id width height - copy video
++ grayscale width height - convert video to grayscale
++ resize width height newwidth newheight - resize video
++ watermark width height x y text fontsize color - put watermark on video
++ image width height x y image-location - put image on whole video
+
+ 
+* System overview 
+
+** Overview
+
+architecture pattern would be pipeline
+
+** Components
+
+ | Subsystem        | External dependencies | Consumes subsystem(s)                          | Provides service to subsystem(s)               | Access through   |
+ |------------------+-----------------------+------------------------------------------------+------------------------------------------------+------------------|
+ | argument parsing | argh                  |                                                | DataInputManager, FilterManager, OutputManager | observer pattern |
+ | NodeManager      | OpenMPI               | FilterManager, DataInputManager, OutputManager | Filter plugin                                  | observer pattern |
+ | other nodes      |                       |                                                |                                                | network          |
+ | FilterManager    | dlopen                | argument parsing                               | NodeManager                                    | observer pattern |
+ | DataInputManager | libav and ffmpeg      | argument parsing                               | NodeManager                                    | observer pattern |
+ | OutputManager    | libav and ffmpeg      | argument parsing                               | NodeManager                                    | observer pattern |
+ | Logging          | glog                  |                                                | all                                            | function call    |
+
+
++ NodeManager
+  + keeps track of all nodes connected to master
+  + when Stream is loaded, divides it into individual nodes for further processing
++ all components which access each other through observer pattern means that subsystem which PROVIDES service to subsystem X is actually providing Listener interface to X
++ for every filter managed by filter manager, individual plugins are loaded dynamically
++ DataInputManager and OutputManager have plugins for loading individual formats and outputing individual formats
+  + internal representation is through Stream object
+
+
+
+* Main concepts 
+
+** Algorithms used 
+
+in order to properly do division among nodes, we will need seek operation to be fast, this can be helpful
+
+http://www.hackerfactor.com/blog/index.php?/archives/307-Picture-Go-Back.html
+
+this can be used for splitting into segments
+
+#+begin_src bash
+  ffmpeg -i INPUT.mp4 -acodec copy -f segment -vcodec copy -reset_timestamps 1 -map 0 OUTPUT%d.mp4
+
+
+#+end_src
+
+
+*** Consensus
+
+when writing output, all nodes keep track of last segment and they write their segments when it is their turn
+
+since segments come in order, they can calculate when to write
+
+
+
+** Data structures used 
+
+The stream will be represented as a vector of segments where every segment is actually list of frames
+
+
+
+* Quality attriubutes 
+
+** Adaptability 
+
++ new filters and input and output reading/writing can be added through plugin system
++ nodes can see other nodes in the network because of OpenMPI
+   
+** Configuration
+
++ nodes are configured the same way as any OpenMPI application
++ ini files for plugin configuration can be found on filesystem by specified rules
+   
+** Logging and debug system
+
++ all logging is done on console
++ debug flags are available through verbosity option with different debug levels (=--debug LEVEL=) where level can be any number from 0 to 10
+   
+** Demonstrators 
+
++ on Borat movie - creating grayscale Borat
++ Borat movie, inserting watermark
++ Comparing this system with single core ffmpeg implementation for turning video into grayscale and resizing
+   
+** Deployment 
+
++ release is deployed on GitHub with tag and releases page
+   
+** Durability and warranty 
+
++ none, software is MIT licensed
+   
+** Functional safety 
+
++ not applicable
+   
+** Security 
+
++ not applicable
+   
+** Scalability 
+
++ yes through OpenMPI, other aspects will be only tested
+   
+** Standards and certification compliance 
+
++ all audio and video standards will be covered through ffmpeg
+
+
+* Data design 
+
+** File formats 
+
+| Data type            | Format             |
+|----------------------+--------------------|
+| Video                | avi, mkv, mp4      |
+| Filter               | shared object file |
+| data input reader    | shared object file |
+| data output writer   | shared object file |
+| plugin configuration | ini file           |
+
+
+* Communication to external systems 
+
+| External system | data shared                       | protocol |
+|-----------------+-----------------------------------+----------|
+| OpenMPI network | Segment objects and metadata info | MPI      |
+
+
+* Logging and error processing 
+
+** Log subsystem
+
++ Implemented using glog
+   
+** Error reporting , handling and recovery
+
++ fail fast and fail early mechanism
++ does not try to recover at all
++ all fatal errors will also bring other nodes to finalize as quickly as possible
+
+* Operating system and hardware compatibility 
+
++ compatible with Linux on high variety of hardware
+  
+* Plugin system 
+
+** Interface to core system 
+
++ filters are implemented as plugins where every plugin contains:
+  + class inheriting Filter base class
+  + class inheriting FilterFactory which will create given object
+  + =create_filter_factory_instance= function which returns filter factory implemented
+
+** Plugin installation and management 
+
++ just putting so file in particular directory
+   
+* Build system 
+
++ CMake will be used
+  
+
+* Profiling 
+
++ vargrind will be used for measurements
+  
+* Testing frameworks 
+
+** Unit testing 
+
++ google test
+   
+** Integration testing 
+
++ creating specialized programs to test components
+   
+** System testing 
+
++ creating swarm of containers
+
+* Code coverage tools 
+
+* Static code analysis 
+
+* Documentation handling 
+
+* Existing technologies dependencies 
+
++ https://github.com/adishavit/argh
++ glog
++ google test
++ docker for system testing
++ libav
++ ffmpeg
++ OpenMPI
+  
+* References
