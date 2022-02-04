@@ -1,0 +1,33 @@
+#pragma once
+
+#include <data/Stream.hpp>
+#include <string>
+extern "C" {
+    #include <libavutil/frame.h>
+    #include <libavutil/mem.h>
+
+    #include <libavcodec/avcodec.h>
+
+}
+#define INBUF_SIZE 1024
+
+
+namespace dtcode::ffmpeg {
+    class FFMpegVideoStream : public ::dtcode::data::Stream {
+        AVCodec *codec;
+        AVCodecParserContext *parser;
+        AVCodecContext *c= NULL;
+        FILE *f;
+        AVFrame *frame;
+        uint8_t inbuf[INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
+        uint8_t *data;
+        size_t   data_size;
+        int ret;
+        AVPacket *pkt;
+
+        public:
+            FFMpegVideoStream(std::string filename);
+            ~FFMpegVideoStream();
+            std::list<dtcode::data::SegmentPtr> parse();
+    };
+}

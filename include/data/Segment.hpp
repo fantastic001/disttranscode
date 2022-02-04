@@ -1,0 +1,20 @@
+
+#pragma once 
+
+#include "Frame.hpp"
+#include <optional>
+#include <list>
+#include <memory>
+
+namespace dtcode::data {
+
+    class Segment {
+        public:
+            virtual std::optional<std::shared_ptr<Frame>> nextFrame() =0;
+            virtual bool containsKeyFrame() =0;
+
+            std::list<std::shared_ptr<Frame>> decodeAllFrames();
+    };
+
+    using SegmentPtr = std::shared_ptr<Segment>;
+}
