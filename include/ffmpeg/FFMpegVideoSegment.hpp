@@ -12,11 +12,11 @@ extern "C" {
 namespace dtcode::ffmpeg {
     class FFMpegVideoSegment : public dtcode::data::Segment {
 
-            AVPacket pkt;
+            AVPacket* pkt;
             AVCodecContext* ctx; 
 
         public:
-            FFMpegVideoSegment(AVCodecContext* ctx, AVPacket pkt);
+            FFMpegVideoSegment(AVCodecContext* ctx, AVPacket* pkt);
             std::optional<std::shared_ptr<dtcode::data::Frame>> nextFrame();
             bool containsKeyFrame();
 

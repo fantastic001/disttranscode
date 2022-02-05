@@ -15,7 +15,8 @@ using namespace std;
 FFMpegVideoWriter::FFMpegVideoWriter(std::string filename, std::string codec_name) {
     endcode = new uint8_t[4] { 0, 0, 1, 0xb7 };
     i = 0;
-    codec = avcodec_find_encoder_by_name(codec_name.c_str());
+    codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
+    // codec = avcodec_find_encoder_by_name(codec_name.c_str());
     if (!codec) {
         fprintf(stderr, "Codec '%s' not found\n", codec_name);
         exit(1);
@@ -117,16 +118,15 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
 
 
     frame->pts = i;
+    if (m_frame->isKeyFrame()) {
+        frame->pict_type = AV_PICTURE_TYPE_I;
+    }
     i++;
     encode(c, frame, pkt, f);
 }
 
 void FFMpegVideoWriter::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile) {
     int ret;
-
-    /* send the frame to the encoder */
-    if (frame)
-        printf("Send frame %3"PRId64"\n", frame->pts);
 
     ret = avcodec_send_frame(enc_ctx, frame);
     if (ret < 0) {

@@ -13,9 +13,12 @@ FFMpegVideoStream::FFMpegVideoStream(std::string filename) {
 
     pkt = av_packet_alloc();
     if (!pkt)
-        // TODO throw exception here
-        exit(1);
+        {
+            fprintf(stderr, "Error occured while allocating packet\n");
+            exit(1);
+        }
 
+    
     /* set end of buffer to 0 (this ensures that no overreading happens for damaged MPEG streams) */
     memset(inbuf + INBUF_SIZE, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
@@ -59,11 +62,10 @@ FFMpegVideoStream::FFMpegVideoStream(std::string filename) {
         exit(1);
     }
 
-    fclose(f);
-
 }
 
 FFMpegVideoStream::~FFMpegVideoStream() {
+    fclose(f);
     av_parser_close(parser);
     avcodec_free_context(&c);
     av_frame_free(&frame);
@@ -92,7 +94,7 @@ std::list<dtcode::data::SegmentPtr> FFMpegVideoStream::parse() {
             data_size -= ret;
 
             if (pkt->size)
-                segments.push_back(make_shared<FFMpegVideoSegment>(c, *pkt));
+                segments.push_back(make_shared<FFMpegVideoSegment>(c, pkt));
         }
     }
     return static_cast<list<SegmentPtr>>(segments);
