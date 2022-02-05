@@ -30,57 +30,12 @@ FFMpegVideoWriter::FFMpegVideoWriter(std::string filename, std::string codec_nam
     pkt = av_packet_alloc();
     if (!pkt)
         exit(1);
-
-    /* put sample parameters */
-    c->bit_rate = 400000;
-    /* resolution must be a multiple of two */
-    c->width = 352;
-    c->height = 288;
-    /* frames per second */
-    c->time_base = (AVRational){1, 25};
-    c->framerate = (AVRational){25, 1};
-
-    /* emit one intra frame every ten frames
-     * check frame pict_type before passing frame
-     * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
-     * then gop_size is ignored and the output of encoder
-     * will always be I frame irrespective to gop_size
-     */
-    c->gop_size = 10;
-    c->max_b_frames = 1;
-    c->pix_fmt = AV_PIX_FMT_YUV420P;
-
-    if (codec->id == AV_CODEC_ID_H264)
-        av_opt_set(c->priv_data, "preset", "slow", 0);
-
-    /* open it */
-    ret = avcodec_open2(c, codec, NULL);
-    if (ret < 0) {
-        fprintf(stderr, "Could not open codec\n");
-        exit(1);
-    }
-
+    initialized = false;
     f = fopen(filename.c_str(), "wb");
     if (!f) {
         fprintf(stderr, "Could not open %s\n", filename);
         exit(1);
     }
-
-    frame = av_frame_alloc();
-    if (!frame) {
-        fprintf(stderr, "Could not allocate video frame\n");
-        exit(1);
-    }
-    frame->format = c->pix_fmt;
-    frame->width  = c->width;
-    frame->height = c->height;
-
-    ret = av_frame_get_buffer(frame, 0);
-    if (ret < 0) {
-        fprintf(stderr, "Could not allocate the video frame data\n");
-        exit(1);
-    }
-
 }
 
 FFMpegVideoWriter::~FFMpegVideoWriter() {
@@ -95,6 +50,53 @@ FFMpegVideoWriter::~FFMpegVideoWriter() {
 }
 
 void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
+    if (!initialized) {
+        initialized = true;
+        /* put sample parameters */
+        c->bit_rate = 400000;
+        /* resolution must be a multiple of two */
+        c->width = m_frame->getDim()[1];
+        c->height = m_frame->getDim()[0];
+        /* frames per second */
+        c->time_base = (AVRational){1, 30};
+        c->framerate = (AVRational){30, 1};
+
+        /* emit one intra frame every ten frames
+        * check frame pict_type before passing frame
+        * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
+        * then gop_size is ignored and the output of encoder
+        * will always be I frame irrespective to gop_size
+        */
+        c->gop_size = 10;
+        c->max_b_frames = 1;
+        c->pix_fmt = AV_PIX_FMT_YUV420P;
+
+        if (codec->id == AV_CODEC_ID_H264)
+            av_opt_set(c->priv_data, "preset", "slow", 0);
+
+        /* open it */
+        ret = avcodec_open2(c, codec, NULL);
+        if (ret < 0) {
+            fprintf(stderr, "Could not open codec\n");
+            exit(1);
+        }
+
+        frame = av_frame_alloc();
+        if (!frame) {
+            fprintf(stderr, "Could not allocate video frame\n");
+            exit(1);
+        }
+        frame->format = c->pix_fmt;
+        frame->width  = c->width;
+        frame->height = c->height;
+
+        ret = av_frame_get_buffer(frame, 0);
+        if (ret < 0) {
+            fprintf(stderr, "Could not allocate the video frame data\n");
+            exit(1);
+        }
+
+    }
     ret = av_frame_make_writable(frame);
     if (ret < 0)
         exit(1);
@@ -105,24 +107,18 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
         frame.
         */
     /* Y */
-    for (y = 0; y < c->height; y++) {
-        for (x = 0; x < c->width; x++) {
-            frame->data[0][y * frame->linesize[0] + x] = x + y + i * 3;
+    for (int channel = 0; channel < m_frame->getChannelCount(); channel++) {
+        for (y = 0; y < c->height; y++) {
+            for (x = 0; x < c->width; x++) {
+                frame->data[channel][y * frame->linesize[channel] + x] = m_frame->getData(channel, pos2d(y,x));
+            }
         }
     }
 
-    /* Cb and Cr */
-    for (y = 0; y < c->height/2; y++) {
-        for (x = 0; x < c->width/2; x++) {
-            frame->data[1][y * frame->linesize[1] + x] = 128 + y + i * 2;
-            frame->data[2][y * frame->linesize[2] + x] = 64 + x + i * 5;
-        }
-    }
 
     frame->pts = i;
     i++;
     encode(c, frame, pkt, f);
-
 }
 
 void FFMpegVideoWriter::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile) {

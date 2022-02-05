@@ -24,6 +24,8 @@ namespace dtcode::ffmpeg {
             uint8_t *endcode;
             void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);
 
+            bool initialized;
+
         public:
             FFMpegVideoWriter(std::string filename, std::string codec_name);
             ~FFMpegVideoWriter();

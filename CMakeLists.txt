@@ -42,3 +42,4 @@ endif(${MPI_FOUND})
 target_link_libraries(disttranscode PRIVATE PkgConfig::LIBAV )
 
 target_include_directories(disttranscode PUBLIC include/)
+set(CMAKE_BUILD_TYPE Debug)
