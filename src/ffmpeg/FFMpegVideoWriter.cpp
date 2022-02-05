@@ -143,7 +143,7 @@ void FFMpegVideoWriter::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket
             exit(1);
         }
 
-        printf("Write packet %3"PRId64" (size=%5d)\n", pkt->pts, pkt->size);
+        // printf("Write packet %3"PRId64" (size=%5d)\n", pkt->pts, pkt->size);
         fwrite(pkt->data, 1, pkt->size, outfile);
         av_packet_unref(pkt);
     }

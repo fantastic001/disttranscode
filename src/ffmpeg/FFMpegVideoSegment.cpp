@@ -28,6 +28,7 @@ FFMpegVideoSegment::FFMpegVideoSegment(AVCodecContext* ctx, AVPacket* pkt) {
         // }
         
     }
+    hasKeyFrame = pkt->flags & AV_PKT_FLAG_KEY;
 
     cout << "Parsed packet ";
     cout << "keyFrame= " << containsKeyFrame() 
@@ -54,12 +55,13 @@ shared_ptr<Frame> FFMpegVideoSegment::read() {
         return nullptr;
     }
     auto result = make_shared<FFMpegVideoFrame>(*frame);
-    av_frame_free(&frame);
+    // TODO find better way to deallocate frames such that data in previous frames is not affected
+    // av_frame_free(&frame);
     return result;
 }
 
 bool FFMpegVideoSegment::containsKeyFrame() {
-    return pkt->flags & AV_PKT_FLAG_KEY;
+    return hasKeyFrame;
 }
 
 std::optional<shared_ptr<Frame>> FFMpegVideoSegment::nextFrame() {

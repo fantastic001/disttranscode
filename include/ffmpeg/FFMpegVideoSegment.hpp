@@ -17,6 +17,7 @@ namespace dtcode::ffmpeg {
             std::list<dtcode::data::FramePtr> frames;
             std::list<dtcode::data::FramePtr>::iterator it;
             dtcode::data::FramePtr read();
+            bool hasKeyFrame;
         public:
             FFMpegVideoSegment(AVCodecContext* ctx, AVPacket* pkt);
             std::optional<std::shared_ptr<dtcode::data::Frame>> nextFrame();
