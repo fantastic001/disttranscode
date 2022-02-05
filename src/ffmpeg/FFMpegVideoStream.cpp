@@ -68,8 +68,8 @@ FFMpegVideoStream::~FFMpegVideoStream() {
     fclose(f);
     av_parser_close(parser);
     avcodec_free_context(&c);
-    av_frame_free(&frame);
-    av_packet_free(&pkt);
+    // av_frame_free(&frame);
+    // av_packet_free(&pkt);
 }
 
 std::list<dtcode::data::SegmentPtr> FFMpegVideoStream::parse() {

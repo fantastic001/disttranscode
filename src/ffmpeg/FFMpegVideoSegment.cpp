@@ -35,24 +35,36 @@ FFMpegVideoSegment::FFMpegVideoSegment(AVCodecContext* ctx, AVPacket* pkt) {
         << " data= " << pkt->data
 
         << endl;
-
+    auto f = read();
+    while (f) {
+        frames.push_back(f);
+        f = read();
+    }
+    it = frames.begin();
 }
 
-std::optional<shared_ptr<Frame>> FFMpegVideoSegment::nextFrame() {
+shared_ptr<Frame> FFMpegVideoSegment::read() {
     
     AVFrame* frame = av_frame_alloc();
     int ret = avcodec_receive_frame(ctx, frame);
     if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-        return optional<shared_ptr<Frame>>();
+        return nullptr;
     else if (ret < 0) {
         fprintf(stderr, "Error during decoding\n");
-        return optional<shared_ptr<Frame>>();
+        return nullptr;
     }
-    auto result = optional(make_shared<FFMpegVideoFrame>(*frame));
+    auto result = make_shared<FFMpegVideoFrame>(*frame);
     av_frame_free(&frame);
     return result;
 }
 
 bool FFMpegVideoSegment::containsKeyFrame() {
     return pkt->flags & AV_PKT_FLAG_KEY;
+}
+
+std::optional<shared_ptr<Frame>> FFMpegVideoSegment::nextFrame() {
+    if (it == frames.end()) return optional<FramePtr>();
+    else {
+        return optional<FramePtr>(*(it++));
+    }
 }
