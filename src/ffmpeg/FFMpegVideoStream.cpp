@@ -5,20 +5,14 @@
 #include <cstdlib>
 #include <ffmpeg/FFMpegVideoSegment.hpp>
 
+#include <iostream>
+
 using namespace dtcode::ffmpeg;
 using namespace dtcode::data;
 using namespace std; 
 
 FFMpegVideoStream::FFMpegVideoStream(std::string filename) {
 
-    pkt = av_packet_alloc();
-    if (!pkt)
-        {
-            fprintf(stderr, "Error occured while allocating packet\n");
-            exit(1);
-        }
-
-    
     /* set end of buffer to 0 (this ensures that no overreading happens for damaged MPEG streams) */
     memset(inbuf + INBUF_SIZE, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
@@ -68,12 +62,11 @@ FFMpegVideoStream::~FFMpegVideoStream() {
     fclose(f);
     av_parser_close(parser);
     avcodec_free_context(&c);
-    // av_frame_free(&frame);
-    // av_packet_free(&pkt);
 }
 
 std::list<dtcode::data::SegmentPtr> FFMpegVideoStream::parse() {
     list<SegmentPtr> segments; 
+    shared_ptr<FFMpegVideoSegment> current_segment = nullptr;
     while (!feof(f)) {
         /* read raw data from the input file */
         data_size = fread(inbuf, 1, INBUF_SIZE, f);
@@ -83,8 +76,9 @@ std::list<dtcode::data::SegmentPtr> FFMpegVideoStream::parse() {
         /* use the parser to split the data into frames */
         data = inbuf;
         while (data_size > 0) {
+            auto pkt = av_packet_alloc();
             ret = av_parser_parse2(parser, c, &pkt->data, &pkt->size,
-                                   data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
+                                  data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
             if (ret < 0) {
                 // TODO throw exception here
                 fprintf(stderr, "Error while parsing\n");
@@ -93,10 +87,28 @@ std::list<dtcode::data::SegmentPtr> FFMpegVideoStream::parse() {
             data      += ret;
             data_size -= ret;
 
-            if (pkt->size)
-                segments.push_back(make_shared<FFMpegVideoSegment>(c, pkt));
+            if (pkt->size) {
+                if (parser->pict_type == AV_PICTURE_TYPE_I) {
+                    if (current_segment) {
+                        segments.push_back(current_segment);
+                    }
+                    current_segment = make_shared<FFMpegVideoSegment>(c);
+                    current_segment->addPacket(pkt, true);
+                }
+                else {
+                    if (!current_segment) {
+                        current_segment = make_shared<FFMpegVideoSegment>(c);
+                        current_segment->addPacket(pkt, false);
+                    }
+                    else {
+                        current_segment->addPacket(pkt, false);
+                    }
+                }
+            }
+        }
+        if (current_segment) {
+            segments.push_back(current_segment);
         }
     }
     return static_cast<list<SegmentPtr>>(segments);
-
 }

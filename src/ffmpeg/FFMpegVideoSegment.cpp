@@ -13,60 +13,51 @@ using namespace std;
 
 
 
-FFMpegVideoSegment::FFMpegVideoSegment(AVCodecContext* ctx, AVPacket* pkt) {
-    this->pkt = pkt;
+FFMpegVideoSegment::FFMpegVideoSegment(AVCodecContext* ctx) {
     this->ctx = ctx;
-
-    int ret = avcodec_send_packet(ctx, pkt);
-    if (ret < 0) {
-        // if (ret == AVERROR(EAGAIN)) {
-            // nextFrame();
-        // }
-        // else {
-            fprintf(stderr, "Error sending a packet for decoding\n");
-            exit(1);
-        // }
-        
-    }
-    hasKeyFrame = pkt->flags & AV_PKT_FLAG_KEY;
-
-    cout << "Parsed packet ";
-    cout << "keyFrame= " << containsKeyFrame() 
-        << " size= " << pkt->size
-        << " data= " << pkt->data
-
-        << endl;
-    auto f = read();
-    while (f) {
-        frames.push_back(f);
-        f = read();
-    }
-    it = frames.begin();
 }
 
-shared_ptr<Frame> FFMpegVideoSegment::read() {
-    
-    AVFrame* frame = av_frame_alloc();
-    int ret = avcodec_receive_frame(ctx, frame);
-    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-        return nullptr;
-    else if (ret < 0) {
-        fprintf(stderr, "Error during decoding\n");
-        return nullptr;
+FFMpegVideoSegment::~FFMpegVideoSegment() {
+    for (auto it : packets) {
+        av_packet_free(&it);
     }
-    auto result = make_shared<FFMpegVideoFrame>(*frame);
-    // TODO find better way to deallocate frames such that data in previous frames is not affected
-    // av_frame_free(&frame);
-    return result;
 }
+
 
 bool FFMpegVideoSegment::containsKeyFrame() {
     return hasKeyFrame;
 }
 
 std::optional<shared_ptr<Frame>> FFMpegVideoSegment::nextFrame() {
-    if (it == frames.end()) return optional<FramePtr>();
-    else {
-        return optional<FramePtr>(*(it++));
+    if (packets.size() == 0) return optional<FramePtr>();
+    AVPacket* pkt = packets.front();
+    int ret = avcodec_send_packet(ctx, pkt);
+    if (ret < 0) {
+        if (ret == AVERROR(EAGAIN)) {
+            return nextFrame();
+        }
+        else {
+            fprintf(stderr, "Error sending a packet for decoding\n");
+            return optional<shared_ptr<FFMpegVideoFrame>>();
+        }
+        
     }
+    AVFrame* frame = av_frame_alloc();
+    ret = avcodec_receive_frame(ctx, frame);
+    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        return optional<FramePtr>();
+    else if (ret < 0) {
+        fprintf(stderr, "Error during decoding\n");
+        return optional<FramePtr>();
+    }
+    auto result = optional<shared_ptr<FFMpegVideoFrame>>(make_shared<FFMpegVideoFrame>(frame));
+    // TODO find better way to deallocate frames such that data in previous frames is not affected
+    // av_frame_free(&frame);
+    packets.pop_front();
+    return result;
+
+}
+void FFMpegVideoSegment::addPacket(AVPacket* packet, bool keyFrame) {
+    packets.push_back(packet);
+    hasKeyFrame |= keyFrame;
 }

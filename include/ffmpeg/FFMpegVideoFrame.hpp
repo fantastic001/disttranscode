@@ -12,10 +12,11 @@ extern "C" {
 }
 namespace dtcode::ffmpeg {
     class FFMpegVideoFrame : public dtcode::data::Frame {
-            AVFrame frame;
+            AVFrame* frame;
         public:
 
-            FFMpegVideoFrame(AVFrame frame);
+            FFMpegVideoFrame(AVFrame* frame);
+            ~FFMpegVideoFrame();
 
             int getChannelCount();
             std::vector<int> getDim();

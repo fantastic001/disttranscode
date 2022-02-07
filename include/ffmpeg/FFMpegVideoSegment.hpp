@@ -7,21 +7,20 @@ extern "C" {
     #include <libavutil/mem.h>
 
     #include <libavcodec/avcodec.h>
-
 }
+
+#include <list>
 namespace dtcode::ffmpeg {
     class FFMpegVideoSegment : public dtcode::data::Segment {
-
-            AVPacket* pkt;
             AVCodecContext* ctx;
-            std::list<dtcode::data::FramePtr> frames;
-            std::list<dtcode::data::FramePtr>::iterator it;
-            dtcode::data::FramePtr read();
             bool hasKeyFrame;
+            std::list<AVPacket*> packets;
         public:
-            FFMpegVideoSegment(AVCodecContext* ctx, AVPacket* pkt);
+            FFMpegVideoSegment(AVCodecContext* ctx);
+            ~FFMpegVideoSegment();
             std::optional<std::shared_ptr<dtcode::data::Frame>> nextFrame();
             bool containsKeyFrame();
+            void addPacket(AVPacket* pkt, bool keyFrame);
 
     };
 }

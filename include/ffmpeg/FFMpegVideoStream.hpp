@@ -2,6 +2,7 @@
 
 #include <data/Stream.hpp>
 #include <string>
+#include <list>
 extern "C" {
     #include <libavutil/frame.h>
     #include <libavutil/mem.h>
@@ -23,7 +24,6 @@ namespace dtcode::ffmpeg {
         uint8_t *data;
         size_t   data_size;
         int ret;
-        AVPacket *pkt;
 
         public:
             FFMpegVideoStream(std::string filename);
