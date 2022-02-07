@@ -24,8 +24,21 @@ int main(int argc, char** argv) {
         FFMpegVideoStream stream("a.mp4");
         cout << "Parsing segments\n";
         auto segments = stream.parse();
+        cout << "Number of segments: " << segments.size() << endl;
+        int i = 0;
         for (auto segment : segments) {
+            i++;
+            cout << "Segment: " << i << " ";
+            if (segment->containsKeyFrame()) cout << " with key frame\n";
+            else cout << endl;
+            if (i == 2) {
+                segment->decodeKeyFrames();
+                continue;
+            }
+            if (i < 2) continue;
+            cout << "Decoding segment " << i << endl;
             auto frames = segment->decodeAllFrames();
+            cout << "Number of frames: " << frames.size() << endl;
             for (auto frame : frames) {
                 cout << endl << frame->getDim()[0] << " " << frame->getDim()[1] << endl;
                 writer.writeFrame(F(frame->getDim()[0], frame->getDim()[1], [frame] (int channel, int y, int x) {

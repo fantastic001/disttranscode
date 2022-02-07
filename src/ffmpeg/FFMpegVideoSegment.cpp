@@ -15,11 +15,12 @@ using namespace std;
 
 FFMpegVideoSegment::FFMpegVideoSegment(AVCodecContext* ctx) {
     this->ctx = ctx;
+    it = packets.begin();
 }
 
 FFMpegVideoSegment::~FFMpegVideoSegment() {
     for (auto it : packets) {
-        av_packet_free(&it);
+        av_packet_free(&it.first);
     }
 }
 
@@ -29,8 +30,8 @@ bool FFMpegVideoSegment::containsKeyFrame() {
 }
 
 std::optional<shared_ptr<Frame>> FFMpegVideoSegment::nextFrame() {
-    if (packets.size() == 0) return optional<FramePtr>();
-    AVPacket* pkt = packets.front();
+    if (it == packets.end()) return optional<FramePtr>();
+    AVPacket* pkt = it->first;
     int ret = avcodec_send_packet(ctx, pkt);
     if (ret < 0) {
         if (ret == AVERROR(EAGAIN)) {
@@ -53,11 +54,29 @@ std::optional<shared_ptr<Frame>> FFMpegVideoSegment::nextFrame() {
     auto result = optional<shared_ptr<FFMpegVideoFrame>>(make_shared<FFMpegVideoFrame>(frame));
     // TODO find better way to deallocate frames such that data in previous frames is not affected
     // av_frame_free(&frame);
-    packets.pop_front();
+    it++;
     return result;
 
 }
 void FFMpegVideoSegment::addPacket(AVPacket* packet, bool keyFrame) {
-    packets.push_back(packet);
+    packets.push_back(make_pair(packet, keyFrame));
     hasKeyFrame |= keyFrame;
+    it = packets.begin();
+}
+
+
+std::list<FramePtr> FFMpegVideoSegment::decodeKeyFrames() {
+    list<FramePtr> result;
+    for (auto kit = packets.begin(); kit != packets.end(); kit++) {
+        auto packet = kit->first;
+        auto isKeyFrame = kit->second;
+        auto temp = it;
+        it = kit; 
+        auto maybe_frame = nextFrame();
+        if (maybe_frame.has_value()) {
+            result.push_back(maybe_frame.value());
+        }
+        it = temp;
+    }
+    return result;
 }
