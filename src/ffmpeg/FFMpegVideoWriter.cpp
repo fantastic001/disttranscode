@@ -118,9 +118,9 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
 
 
     frame->pts = i;
-    // if (m_frame->isKeyFrame()) {
-    //     frame->pict_type = AV_PICTURE_TYPE_I;
-    // }
+    if (m_frame->isKeyFrame()) {
+        frame->pict_type = AV_PICTURE_TYPE_I;
+    }
     i++;
     encode(c, frame, pkt, f);
 }
