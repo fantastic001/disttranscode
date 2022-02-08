@@ -22,6 +22,8 @@ pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
 
 
 set(SOURCES 
+src/cmd/ArgumentParser.cpp
+src/data/FilterManager.cpp
 src/data/Frame.cpp
 src/data/Segment.cpp
 src/ffmpeg/FFMpegVideoFrame.cpp
@@ -29,6 +31,7 @@ src/ffmpeg/FFMpegVideoReader.cpp
 src/ffmpeg/FFMpegVideoSegment.cpp
 src/ffmpeg/FFMpegVideoStream.cpp
 src/ffmpeg/FFMpegVideoWriter.cpp
+src/filters/black/BlackFilter.cpp
 src/main.cpp
 
 )

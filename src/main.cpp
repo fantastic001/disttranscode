@@ -9,19 +9,28 @@
 #include <ffmpeg/FFMpegVideoStream.hpp>
 #include <frame/FrameF.hpp>
 
+#include <data/FilterManager.hpp>
+#include <cmd/ArgumentParser.hpp>
+
 using namespace std; 
 using namespace dtcode::ffmpeg;
 using namespace dtcode::frame;
 using namespace dtcode::data;
+using namespace dtcode::cmd;
 
 int main(int argc, char** argv) {
     // MPI::Init(argc, argv);
+    ArgumentParser parser(argc, argv);
+
+    cout << "Input: " << parser.getInputLocation() << endl 
+        << "Output: " << parser.getOutputLocation() << endl;
+    
     {
-        FFMpegVideoWriter writer("b.mp4", "mpeg4");
+        FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
 
         // string borat = "/home/stefan//Downloads/Borat (2006) [1080p]/Borat.2006.1080p.BrRip.x264.YIFY.mp4";
         // FFMpegVideoStream stream(borat);
-        FFMpegVideoStream stream("a.mp4");
+        FFMpegVideoStream stream(parser.getInputLocation());
         cout << "Parsing segments\n";
         auto segments = stream.parse();
         cout << "Number of segments: " << segments.size() << endl;
@@ -52,6 +61,12 @@ int main(int argc, char** argv) {
             }
         }
     }
+
+    auto filter_names = FilterManager::getInstance()->getAllFilterNames();
+    for (auto name : filter_names) {
+        cout << "Filter: " << name << endl;
+    }
+
     // FFMpegVideoWriter writer2("a.mp4", "mpeg4");
     // writer2.writeFrames([] (int num) {
     //     return F(10, 10, [num] (int c,int y,int x) {
