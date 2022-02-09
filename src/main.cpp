@@ -1,5 +1,4 @@
 
-// #include <mpi.h>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,15 +11,30 @@
 #include <data/FilterManager.hpp>
 #include <cmd/ArgumentParser.hpp>
 
+#include <net/NodeContext.hpp>
+
 using namespace std; 
 using namespace dtcode::ffmpeg;
 using namespace dtcode::frame;
 using namespace dtcode::data;
 using namespace dtcode::cmd;
+using namespace dtcode::net;
 
 int main(int argc, char** argv) {
-    // MPI::Init(argc, argv);
+    NodeContext context(&argc, &argv);
     ArgumentParser parser(argc, argv);
+    cout << "My rank " << context.rank();
+
+    if (context.rank() == 0) {
+        for (int i = 1; i<context.size(); i++) {
+            context[i] << 42;
+        }
+    }
+    else {
+        int magic; 
+        context[0] >> magic;
+        cout << magic << " on rank " << context.rank() << endl;
+    }
 
     cout << "Input: " << parser.getInputLocation() << endl 
         << "Output: " << parser.getOutputLocation() << endl;
@@ -75,8 +89,6 @@ int main(int argc, char** argv) {
     //     });
     // }, 25);
 
-
-    // MPI::Finalize();
 }
 
 

@@ -33,6 +33,8 @@ src/ffmpeg/FFMpegVideoStream.cpp
 src/ffmpeg/FFMpegVideoWriter.cpp
 src/filters/black/BlackFilter.cpp
 src/main.cpp
+src/net/NodeComm.cpp
+src/net/NodeContext.cpp
 
 )
 
