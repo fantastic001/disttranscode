@@ -28,12 +28,18 @@ int main(int argc, char** argv) {
     if (context.rank() == 0) {
         for (int i = 1; i<context.size(); i++) {
             context[i] << 42;
+            vector<uint8_t> bytes = {0xff,0x0,0xff};
+            context[i] << bytes;
         }
     }
     else {
         int magic; 
         context[0] >> magic;
         cout << magic << " on rank " << context.rank() << endl;
+        vector<uint8_t> bytes;
+        context[0] >> bytes;
+        cout << "Received bytes: " << bytes.size() << endl;
+        cout << ((int) bytes[1]);
     }
 
     cout << "Input: " << parser.getInputLocation() << endl 
