@@ -24,6 +24,7 @@ namespace dtcode::ffmpeg {
             bool containsKeyFrame();
             void addPacket(AVPacket* pkt, bool keyFrame);
             std::list<dtcode::data::FramePtr> decodeKeyFrames();
+            std::vector<uint8_t> serialize();
 
     };
 }

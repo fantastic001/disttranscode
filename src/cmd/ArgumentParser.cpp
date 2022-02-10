@@ -21,7 +21,7 @@ vector<FilterPtr> ArgumentParser::getFilters() {
         if (arguments[i] == "--filter" || arguments[i] == "-f") {
             if (i == arguments.size() - 1) return result; 
             else {
-                auto parser = FilterManager::getInstance()->findFilter(arguments[i]);
+                auto parser = FilterManager::getInstance()->findFilter(arguments[i+1]);
                 auto factory = parser->parse(
                     arguments.begin() + i + 2, 
                     find_first_of(arguments.begin()+i+2, arguments.end(), filter_flags.begin(), filter_flags.end())

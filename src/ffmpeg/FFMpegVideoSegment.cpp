@@ -80,3 +80,10 @@ std::list<FramePtr> FFMpegVideoSegment::decodeKeyFrames() {
     }
     return result;
 }
+
+vector<uint8_t> FFMpegVideoSegment::serialize() {
+    vector<uint8_t> result;
+    for (auto packet : packets) {
+        result.insert(result.end(), packet.first->data, packet.first->data +  packet.first->size);
+    }
+}

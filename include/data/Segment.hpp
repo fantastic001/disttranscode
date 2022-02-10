@@ -13,6 +13,7 @@ namespace dtcode::data {
             virtual std::optional<std::shared_ptr<Frame>> nextFrame() =0;
             virtual bool containsKeyFrame() =0;
             virtual std::list<FramePtr> decodeKeyFrames() =0;
+            virtual std::vector<uint8_t> serialize() =0;
 
             std::list<std::shared_ptr<Frame>> decodeAllFrames();
     };

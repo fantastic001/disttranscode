@@ -18,7 +18,7 @@ namespace dtcode::ffmpeg {
         AVCodec *codec;
         AVCodecParserContext *parser;
         AVCodecContext *c= NULL;
-        FILE *f;
+        std::vector<uint8_t> serialized_data;
         AVFrame *frame;
         uint8_t inbuf[INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
         uint8_t *data;
@@ -27,6 +27,7 @@ namespace dtcode::ffmpeg {
 
         public:
             FFMpegVideoStream(std::string filename);
+            FFMpegVideoStream(std::vector<uint8_t> serialized_data);
             ~FFMpegVideoStream();
             std::list<dtcode::data::SegmentPtr> parse();
     };
