@@ -77,6 +77,77 @@ since segments come in order, they can calculate when to write
 
 
 
+TODO:
+
++ add broadcast to context as =operator<<= to send message to everyone
++ add possibility to receive message from anyone =context() >> message=
++ add =context.broadcast(rank) >> data= ability to broadcast message from process =rank= and to write it to data on all machines
++ Implement =FFMpegVideoDecoder= which inherits =VideoWriter= and has method =getSegment() -> Segment=
++ define =Consensus= interface and implement =UniformFloodingConsensus=
++ define =Distribution= interface =distribute: Stream -> IO= and =getRank: Int as index -> int as rank= and =next(): -> Int= 
++ implement =StrideDistribution(Context)=
++ Implement =Synchronizer= which has:
+  + distribution implementation
+  + consensus implementation
+  + writer implementation
++ Synchronizer basically does:
+  + takes stream
+  + distributes it
+  + repeatedly calls consensus
+    + calls propose, in order to do that, it has to decode and transform and encode back frames and then proposes index of that segment
+    + if we already have index of some segment which is computed already, we decode, transform and encode other segments and send this current index immediately
+    + to get next segment to work on, call =distribution.next(context)= to get next index for given rank
+    + retrieves next segment index by calling =getDecision=, if it is rank=0 then do the following:
+      + from segment it calculates rank of process
+      + gets segment from given process
+      + writes it into file
+    + if it is rank=0 or any other rank
+      + if decided index is yours, send segment to 0
+      + else do nothing
+
+
+consensus
+
+
+#+begin_example
+
+  constructor(context):
+	  round = 1
+	  N = context.size()
+	  decision = null
+	  receivedfrom is array of integer ranks of size N
+	  proposals is array of empty sets of size N
+	  receivedfrom[0] = all processes ranks
+
+  propose(value):
+	  proposals[1].add(v)
+	  context << "PROPOSAL" << 1 << proposals[1]
+
+  getDecision():
+      while decision == null:
+	  for i = 0 to context.size():
+	      int r, set ps
+	      string msg
+	      context(i) >> msg
+	      if (msg == "PROPOSAL"):
+		 context(i) >> r >> ps
+		 receivedFrom[r].add(i)
+		 proposals[r].union(ps)
+		 if receivedFrom[round].size() == context.size() and decision == null:
+		    if receivedFrom[round] == receivedFrom[round-1]:
+		       decision = min(proposals[round])
+		       context << "DECIDED" << decision
+		       return decision
+		    else:
+		       round++
+		       context << "PROPOSAL" << round << proposals[round-1]
+
+	      else if msg == "DECIDED" and decision == null:
+		   context(i) >> decision
+		   context << decision
+		   return decision
+#+end_example
+
 ** Data structures used 
 
 The stream will be represented as a vector of segments where every segment is actually list of frames
