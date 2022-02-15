@@ -7,9 +7,9 @@
 
 namespace dtcode::net {
     class NodeComm {
-            int from_rank, to_rank;
+            int from_rank, to_rank, size;
         public:
-            NodeComm(int from_rank, int to_rank);
+            NodeComm(int from_rank, int to_rank, int size);
 
             void send(std::string msg);
             std::string receive();

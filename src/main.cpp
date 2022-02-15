@@ -31,7 +31,6 @@ int main(int argc, char** argv) {
     for (auto name : filter_names) {
         cout << "Filter: " << name << endl;
     }
-
     auto filters = parser.getFilters();
 
     FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
