@@ -17,6 +17,7 @@ namespace dtcode::ffmpeg {
             bool hasKeyFrame;
             std::list<std::pair<AVPacket*, bool>> packets;
             std::list<std::pair<AVPacket*, bool>>::iterator it;
+            std::vector<uint8_t> serialized;
         public:
             FFMpegVideoSegment(AVCodecContext* ctx);
             ~FFMpegVideoSegment();

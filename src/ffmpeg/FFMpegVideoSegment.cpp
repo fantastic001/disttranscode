@@ -62,6 +62,7 @@ void FFMpegVideoSegment::addPacket(AVPacket* packet, bool keyFrame) {
     packets.push_back(make_pair(packet, keyFrame));
     hasKeyFrame |= keyFrame;
     it = packets.begin();
+    serialized.insert(serialized.end(), packet->data, packet->data + packet->size);
 }
 
 
@@ -82,8 +83,5 @@ std::list<FramePtr> FFMpegVideoSegment::decodeKeyFrames() {
 }
 
 vector<uint8_t> FFMpegVideoSegment::serialize() {
-    vector<uint8_t> result;
-    for (auto packet : packets) {
-        result.insert(result.end(), packet.first->data, packet.first->data +  packet.first->size);
-    }
+    return serialized;
 }

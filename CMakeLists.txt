@@ -26,6 +26,7 @@ src/cmd/ArgumentParser.cpp
 src/data/FilterManager.cpp
 src/data/Frame.cpp
 src/data/Segment.cpp
+src/ffmpeg/FFMpegVideoEncoder.cpp
 src/ffmpeg/FFMpegVideoFrame.cpp
 src/ffmpeg/FFMpegVideoReader.cpp
 src/ffmpeg/FFMpegVideoSegment.cpp

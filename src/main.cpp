@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <ffmpeg/FFMpegVideoWriter.hpp>
+#include <ffmpeg/FFMpegVideoEncoder.hpp>
 #include <ffmpeg/FFMpegVideoStream.hpp>
 #include <frame/FrameF.hpp>
 
@@ -20,6 +21,15 @@ using namespace dtcode::data;
 using namespace dtcode::cmd;
 using namespace dtcode::net;
 
+ostream& operator<< (ostream& os, const vector<uint8_t>& data) {
+    os << "Segment of size=" << data.size() << endl;
+    for (auto b : data) {
+        os << hex << static_cast<int>(b) << " ";
+    }
+    os << "\n";
+    return os;
+}
+
 int main(int argc, char** argv) {
     NodeContext context(&argc, &argv);
     ArgumentParser parser(argc, argv);
@@ -33,7 +43,8 @@ int main(int argc, char** argv) {
     }
     auto filters = parser.getFilters();
 
-    FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
+    FFMpegVideoEncoder writer;
+    // FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
 
     FFMpegVideoStream stream(parser.getInputLocation());
     auto segments = stream.parse();
@@ -54,6 +65,8 @@ int main(int argc, char** argv) {
             }
         } 
     }
+    cout << "Decoded and encoded video successfully: " << writer.getSegment()->serialize() << endl;
+
 
 
     // FFMpegVideoWriter writer2("a.mp4", "mpeg4");
