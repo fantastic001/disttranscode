@@ -46,6 +46,7 @@ set(SOURCES
 set(TEST_SOURCES
     test/main.cpp
     test/TestStrideDistribution.cpp
+    test/TestUniformFloodingConsensus.cpp
 
 )
 

@@ -6,68 +6,13 @@
 #include <net/StrideDistribution.hpp>
 #include "gmock/gmock.h"  // Brings in Google Mock.
 
+#include "mock_net.hpp"
+#include "mocks.hpp"
+
 using namespace dtcode::net;
 using namespace dtcode::data;
 using namespace std; 
 using namespace testing;
-
-
-struct Network {
-    int size; 
-    int rank;
-    vector<vector<uint8_t>> messages;
-    vector<int> senders;
-    vector<int> receivers; 
-};
-
-struct NetworkCommFake {
-    shared_ptr<Network> net;
-    int from, to;
-    NetworkCommFake(shared_ptr<Network> net, int from, int to)  : net(net), from(from), to(to) {
-
-    }
-
-    NetworkCommFake& operator<<(vector<uint8_t> data) {
-        net->messages.push_back(data);
-        net->senders.push_back(from);
-        net->receivers.push_back(to);
-        return *this;
-    }
-
-    NetworkCommFake& operator>>(vector<uint8_t>& data) {
-        for (int i = net->messages.size()-1; i>=0; i--) {
-            if (net->senders[i] == from && (net->receivers[i] == to || net->receivers[i] == net->size)) {
-                data = net->messages[i];
-            }
-        }
-        return *this;
-    }
-};
-
-struct NetworkFake
-{
-    shared_ptr<Network> net;
-
-    NetworkFake(shared_ptr<Network> net) : net(net) {
-    }
-
-    NetworkFake& operator<<(const vector<uint8_t>& data) {
-        net->messages.push_back(data);
-        net->senders.push_back(net->rank);
-        net->receivers.push_back(net->size);
-    }
-
-    NetworkCommFake operator[] (int to) {
-        return NetworkCommFake(net, net->rank, to);
-    }
-
-    int size() {
-        return net->size;
-    }
-    int rank() {
-        return net->rank;
-    }
-};
 
 
 
@@ -93,21 +38,8 @@ TEST(TestStrideDistributionTestBasic, test_creation) {
 
 TEST_F(StrideDistributionTest, distribute_will_not_send_message_on_null) {
     distribution->distribute(nullptr);
-    ASSERT_EQ(net->messages.size(), 0);
+    ASSERT_EQ(::messages.size(), 0);
 }
-
-class MockStream : public Stream {
- public:
-  MOCK_METHOD0(parse, list<SegmentPtr>());
-};
-
-class MockSegment : public Segment {
- public:
-  MOCK_METHOD0(nextFrame, optional<FramePtr>());
-  MOCK_METHOD0(containsKeyFrame, bool());
-  MOCK_METHOD0(decodeKeyFrames, list<FramePtr>());
-  MOCK_METHOD0(serialize, vector<uint8_t>());
-};
 
 
 TEST_F(StrideDistributionTest, distribute_numbver_of_messages_equals_number_of_segments) {
@@ -116,7 +48,7 @@ TEST_F(StrideDistributionTest, distribute_numbver_of_messages_equals_number_of_s
     auto stream = make_shared<MockStream>();
     EXPECT_CALL(*stream, parse()).WillOnce(Return(list<SegmentPtr> {segment}));
     distribution->distribute(stream);
-    ASSERT_EQ(net->messages.size(), 0);
+    ASSERT_EQ(::messages.size(), 0);
 }
 
 TEST_F(StrideDistributionTest, distribute_onebyone) {
@@ -131,12 +63,12 @@ TEST_F(StrideDistributionTest, distribute_onebyone) {
     auto stream = make_shared<MockStream>();
     EXPECT_CALL(*stream, parse()).WillOnce(Return(list<SegmentPtr> {segment0, segment1, segment2, segment3}));
     distribution->distribute(stream);
-    ASSERT_EQ(net->messages.size(), 4);
-    EXPECT_EQ(net->receivers[0], 1);
-    EXPECT_EQ(net->receivers[1], 1);
-    EXPECT_EQ(net->receivers[2], 2);
-    EXPECT_EQ(net->receivers[3], 2);
-    EXPECT_EQ(net->senders[3], 0);
+    ASSERT_EQ(::messages.size(), 4);
+    EXPECT_EQ(::receivers[0], 1);
+    EXPECT_EQ(::receivers[1], 1);
+    EXPECT_EQ(::receivers[2], 2);
+    EXPECT_EQ(::receivers[3], 2);
+    EXPECT_EQ(::senders[3], 0);
 }
 
 TEST_F(StrideDistributionTest, next_index_should_return_negative_one_if_no_remaining_segments) {
