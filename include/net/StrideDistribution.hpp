@@ -14,13 +14,13 @@ namespace dtcode::net {
                 this->context = context;
                 next = -1;
             }
-            void distribute(dtcode::data::StreamPtr stream) {
-                if (stream == nullptr) return;
+            std::list<dtcode::data::SegmentPtr> distribute(dtcode::data::StreamPtr stream) {
+                if (stream == nullptr) return std::list<dtcode::data::SegmentPtr>();
                 auto segments_list = stream->parse();
                 for (auto segment : segments_list) {
                     segments.push_back(segment);
                 }
-                if (segments.size() == 0) return;
+                if (segments.size() == 0) return segments_list;
                 next = 0;
                 for (int i = 0; i<segments.size(); i++) {
                     auto data = segments[i]->serialize();
@@ -33,6 +33,7 @@ namespace dtcode::net {
                         }
                     }
                 }
+                return segments_list;
             }
             int getRank(int index) {
                 return index % context->size();
@@ -40,6 +41,9 @@ namespace dtcode::net {
             int nextIndex() {
                 if (next == segments.size()) return -1;
                 else return next++;
+            }
+            dtcode::data::SegmentPtr getSegment(int index) {
+                return segments[index];
             }
 
     };

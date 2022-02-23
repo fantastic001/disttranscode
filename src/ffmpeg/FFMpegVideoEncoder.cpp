@@ -8,6 +8,8 @@ extern "C" {
 
 }
 
+#include <iostream>
+
 using namespace dtcode::ffmpeg;
 using namespace dtcode::data;
 using namespace std;
@@ -63,6 +65,7 @@ shared_ptr<FFMpegVideoSegment> FFMpegVideoEncoder::getSegment() {
         /* put sample parameters */
     c->bit_rate = 400000;
     /* resolution must be a multiple of two */
+    if (frames.size() == 0) return segment;
     c->width = frames.front()->getDim()[1];
     c->height = frames.front()->getDim()[0];
     /* frames per second */

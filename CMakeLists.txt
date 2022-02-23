@@ -40,6 +40,7 @@ set(SOURCES
 
     src/net/NodeComm.cpp
     src/net/NodeContext.cpp
+    src/net/Synchronizer.cpp
 
 )
 
@@ -47,6 +48,7 @@ set(TEST_SOURCES
     test/main.cpp
     test/TestStrideDistribution.cpp
     test/TestUniformFloodingConsensus.cpp
+    test/TestSynchronizer.cpp
 
 )
 
