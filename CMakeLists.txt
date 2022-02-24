@@ -46,8 +46,9 @@ set(SOURCES
 
 set(TEST_SOURCES
     test/main.cpp
-    test/TestStrideDistribution.cpp
+    test/mock_net.cpp
     test/TestUniformFloodingConsensus.cpp
+    test/TestStrideDistribution.cpp
     test/TestSynchronizer.cpp
 
 )

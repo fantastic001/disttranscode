@@ -7,18 +7,16 @@
 #include <utility>
 #include "gmock/gmock.h"  // Brings in Google Mock.
 
-using namespace dtcode::net;
-using namespace dtcode::data;
 using namespace std; 
 using namespace testing;
 
-static vector<vector<uint8_t>> messages;
-static vector<int> senders;
-static vector<int> receivers; 
+vector<vector<uint8_t>>& get_messages();
+vector<int>& get_senders();
+vector<int>& get_receivers(); 
 
-static vector<string> string_messages;
-static vector<int> string_senders;
-static vector<int> string_receivers;
+vector<string>& get_string_messages();
+vector<int>& get_string_senders();
+vector<int>& get_string_receivers();
 
 struct Network {
     int size; 
@@ -42,19 +40,19 @@ struct NetworkCommFake {
             }
             return *this;
         }
-        ::messages.push_back(data);
-        ::senders.push_back(from);
-        ::receivers.push_back(to);
+        ::get_messages().push_back(data);
+        ::get_senders().push_back(from);
+        ::get_receivers().push_back(to);
         return *this;
     }
 
     NetworkCommFake& operator>>(vector<uint8_t>& data) {
-        for (int i = 0; i<::messages.size(); i++) {
-            if (::senders[i] == to && (::receivers[i] == from || ::receivers[i] == net->size)) {
-                data = ::messages[i];
-                ::messages.erase(::messages.begin() + i);
-                ::receivers.erase(::receivers.begin() + i);
-                ::senders.erase(::senders.begin()+i);
+        for (int i = 0; i<::get_messages().size(); i++) {
+            if (::get_senders()[i] == to && (::get_receivers()[i] == from || ::get_receivers()[i] == net->size)) {
+                data = ::get_messages()[i];
+                ::get_messages().erase(::get_messages().begin() + i);
+                ::get_receivers().erase(::get_receivers().begin() + i);
+                ::get_senders().erase(::get_senders().begin()+i);
                 return *this;
             }
         }
@@ -73,22 +71,25 @@ struct NetworkCommFake {
         }
         stringstream ss;
         ss << data;
-        ::string_messages.push_back(ss.str());
-        ::string_senders.push_back(from);
-        ::string_receivers.push_back(to);
+        ::get_string_messages().push_back(ss.str());
+        ::get_string_senders().push_back(from);
+        ::get_string_receivers().push_back(to);
+        std::cout << from << " sent message to " << to << ": " << data << "\n";
+        cout << "Buffer size=" << get_string_messages().size() << endl;
         return *this;
     }
 
     template<class T> 
     NetworkCommFake& operator>>(T& data) {
-        for (int i = 0; i<::string_messages.size(); i++) {
-            if (::string_senders[i] == to && (::string_receivers[i] == from)) {
-                stringstream ss(::string_messages[i]);
+        std::cout << "Buffer size " << get_string_messages().size() << endl;
+        for (int i = 0; i<::get_string_messages().size(); i++) {
+            if (::get_string_senders()[i] == to && (::get_string_receivers()[i] == from)) {
+                stringstream ss(::get_string_messages()[i]);
                 ss >> data;
-                std::cout << from << " Received " << string_messages[i] << endl;
-                ::string_messages.erase(::string_messages.begin() + i);
-                ::string_receivers.erase(::string_receivers.begin() + i);
-                ::string_senders.erase(::string_senders.begin() + i);
+                std::cout << from << " Received " << get_string_messages()[i] << endl;
+                ::get_string_messages().erase(::get_string_messages().begin() + i);
+                ::get_string_receivers().erase(::get_string_receivers().begin() + i);
+                ::get_string_senders().erase(::get_string_senders().begin() + i);
                 return *this;
             }
         }

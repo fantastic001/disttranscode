@@ -6,6 +6,10 @@
 #include "mock_net.hpp"
 #include <frame/FrameF.hpp>
 
+using namespace dtcode::net;
+using namespace dtcode::data;
+using namespace dtcode::frame;
+
 TEST(TestSynchronizerBasic, test_creation) {
     auto consensusFactory = make_shared<MockConsensusFactory>();
     auto distributionFactory = make_shared<MockDistributionFactory>();
