@@ -70,7 +70,7 @@ namespace dtcode::net {
                 if (next == segments.size()) return -1;
                 else return next++;
             }
-            dtcode::data::SegmentPtr getSegment(int index) {
+            dtcode::data::SegmentPtr getSegment(int index, dtcode::data::SegmentPtr toSend = nullptr) {
                 if (getRank(index) != context->rank()) {
                     std::vector<uint8_t> data; 
                     (*context)[getRank(index)] >> data;
@@ -88,9 +88,15 @@ namespace dtcode::net {
                     }
                 }
                 else {
-                    auto my_segment = segments[(index - context->rank()) / context->size()];
-                    (*context)() << my_segment->serialize();
-                    return my_segment;
+                    if (toSend == nullptr) {
+                        auto my_segment = segments[(index - context->rank()) / context->size()];
+                        (*context)() << my_segment->serialize();
+                        return my_segment;
+                    }
+                    else {
+                        (*context)() << toSend->serialize();
+                        return toSend;
+                    }
                 }
             }
 

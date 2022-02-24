@@ -44,7 +44,7 @@ class MockDistribution : public dtcode::net::Distribution {
   MOCK_METHOD1(distribute, std::list<SegmentPtr>(StreamPtr));
   MOCK_METHOD0(nextIndex, int());
   MOCK_METHOD1(getRank, int(int));
-  MOCK_METHOD1(getSegment, SegmentPtr(int));
+  MOCK_METHOD2(getSegment, SegmentPtr(int, SegmentPtr));
 };
 class MockConsensus : public dtcode::net::Consensus {
  public:

@@ -57,7 +57,7 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
     cout << (root ? "XXX" : "YYY") << " " << decision << " proposal=" << proposal <<endl;
     cout.flush();
             if (decision == proposal) {
-                seg = index_segment_map.begin()->second;
+                seg = distribution->getSegment(proposal, (index_segment_map.begin()->second));
                 index_segment_map.erase(index_segment_map.begin());
             }
             else {

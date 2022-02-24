@@ -69,8 +69,8 @@ TEST_F(SynchronizerTest, test_will_decode_encode_filter) {
     EXPECT_CALL(*distribution, distribute(_)).WillOnce(Return(list<SegmentPtr> {
         segment,
     }));
-    EXPECT_CALL(*distribution, getSegment(0)).WillOnce(Return(segment));
-    EXPECT_CALL(*distribution, getSegment(1)).Times(Exactly(0));
+    EXPECT_CALL(*distribution, getSegment(0, _)).WillRepeatedly(Return(segment));
+    EXPECT_CALL(*distribution, getSegment(1, _)).Times(Exactly(0));
     auto filter = make_shared<MockFilter>();
     synchronizer->addFilter(filter);
     EXPECT_CALL(*filter, filter(frame)).Times(Exactly(1)).WillOnce(Return(frame));
@@ -109,8 +109,8 @@ TEST_F(SynchronizerTest, test_two_synchronizers) {
         segment,
         segment1
     }));
-    EXPECT_CALL(*distribution1, getSegment(0)).WillOnce(Return(segment));
-    EXPECT_CALL(*distribution1, getSegment(1)).WillOnce(Return(segment1));
+    EXPECT_CALL(*distribution1, getSegment(0, _)).WillRepeatedly(Return(segment));
+    EXPECT_CALL(*distribution1, getSegment(1, _)).WillRepeatedly(Return(segment1));
     EXPECT_CALL(*distribution1, nextIndex()).Times(Exactly(2)).WillOnce(Return(1)).WillRepeatedly(Return(-1));
 
     EXPECT_CALL(*consensus1, propose(_)).Times(Exactly(3));
@@ -120,8 +120,8 @@ TEST_F(SynchronizerTest, test_two_synchronizers) {
         .WillOnce(Return(-1));
 
     
-    EXPECT_CALL(*distribution, getSegment(0)).WillOnce(Return(segment));
-    EXPECT_CALL(*distribution, getSegment(1)).WillOnce(Return(segment1));
+    EXPECT_CALL(*distribution, getSegment(0, _)).WillRepeatedly(Return(segment));
+    EXPECT_CALL(*distribution, getSegment(1, _)).WillRepeatedly(Return(segment1));
     EXPECT_CALL(*distribution, nextIndex()).Times(Exactly(2)).WillOnce(Return(0)).WillRepeatedly(Return(-1));
     EXPECT_CALL(*consensus, propose(_)).Times(Exactly(3));
     EXPECT_CALL(*consensus, getDecision()).Times(Exactly(3))
