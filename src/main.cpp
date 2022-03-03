@@ -14,6 +14,10 @@
 
 #include <net/NodeContext.hpp>
 
+#include <net/Synchronizer.hpp>
+#include <net/UniformFloodingConsensus.hpp>
+#include <net/StrideDistribution.hpp>
+
 using namespace std; 
 using namespace dtcode::ffmpeg;
 using namespace dtcode::frame;
@@ -21,19 +25,34 @@ using namespace dtcode::data;
 using namespace dtcode::cmd;
 using namespace dtcode::net;
 
-ostream& operator<< (ostream& os, const vector<uint8_t>& data) {
-    os << "Segment of size=" << data.size() << endl;
-    for (auto b : data) {
-        os << hex << static_cast<int>(b) << " ";
-    }
-    os << "\n";
-    return os;
-}
+
+class MyConsensusFactory : public ConsensusFactory {
+        shared_ptr<NodeContext> context;
+    public:
+        MyConsensusFactory(shared_ptr<NodeContext> context) : context(context) {
+
+        }
+        ConsensusPtr create() {
+            return make_shared<UniformFloodingConsensus<NodeContext>>(context);
+        }
+};
+
+
+class MyDistributionFactory : public DistributionFactory {
+        shared_ptr<NodeContext> context;
+    public:
+        MyDistributionFactory(shared_ptr<NodeContext> context) : context(context) {
+
+        }
+        DistributionPtr create() {
+            return make_shared<StrideDistribution<NodeContext>>(context);
+        }
+};
 
 int main(int argc, char** argv) {
-    NodeContext context(&argc, &argv);
+    auto context = make_shared<NodeContext>(&argc, &argv);
     ArgumentParser parser(argc, argv);
-    cout << "Network size: " << context.size() << endl;
+    cout << "Network size: " << context->size() << endl;
     cout << "Input: " << parser.getInputLocation() << endl 
         << "Output: " << parser.getOutputLocation() << endl;
     
@@ -43,40 +62,20 @@ int main(int argc, char** argv) {
     }
     auto filters = parser.getFilters();
 
-    FFMpegVideoEncoder writer;
-    // FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
-
-    FFMpegVideoStream stream(parser.getInputLocation());
-    auto segments = stream.parse();
-    if (context.rank() == 0) cout << "Number of segments: " << segments.size() << endl;
-    int i = 0;
-    for (auto segment : segments) {
-        i++;
-        if ((i-1) % context.size() == context.rank()) {
-            cout << "Segment: " << i << " on rank " << context.rank() << endl;
-            auto frames = segment->decodeAllFrames();
-            cout << "Number of frames: " << frames.size() << " on rank " << context.rank() << endl;
-            for (auto frame : frames) {
-                cout << endl << frame->getDim()[0] << " " << frame->getDim()[1] << endl;
-                for (auto filter : filters) {
-                    frame = filter->filter(frame);
-                }
-                writer.writeFrame(frame);
-            }
-        } 
+    auto consensusFactory = make_shared<MyConsensusFactory>(context);
+    auto distributionFactory = make_shared<MyDistributionFactory>(context);
+    cout << "Rank " << context->rank() << endl;
+    auto sync = make_shared<Synchronizer>(distributionFactory, consensusFactory, context->rank() == 0);
+    for (auto filter : filters) {
+        sync->addFilter(filter);
     }
-    cout << "Decoded and encoded video successfully: " << writer.getSegment()->serialize() << endl;
-
-
-
-    // FFMpegVideoWriter writer2("a.mp4", "mpeg4");
-    // writer2.writeFrames([] (int num) {
-    //     return F(10, 10, [num] (int c,int y,int x) {
-    //         if (num < 12) return rgb2yuv(0,0,0.0, c);
-    //         else return rgb2yuv(1,0,0,c);
-    //     });
-    // }, 25);
-
+    auto stream = make_shared<FFMpegVideoStream>(parser.getInputLocation());
+    auto segments = sync->process(stream);
+    
+    FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
+    for (auto seg : segments) {
+        writer.writeSegment(seg);
+    }
 }
 
 

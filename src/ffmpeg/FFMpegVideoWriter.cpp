@@ -7,6 +7,7 @@ extern "C" {
 
 }
 
+
 using namespace dtcode::ffmpeg;
 using namespace dtcode::data;
 using namespace std;
@@ -146,5 +147,11 @@ void FFMpegVideoWriter::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket
         // printf("Write packet %3"PRId64" (size=%5d)\n", pkt->pts, pkt->size);
         fwrite(pkt->data, 1, pkt->size, outfile);
         av_packet_unref(pkt);
+    }
+}
+
+void FFMpegVideoWriter::writeSegment(SegmentPtr segment) {
+    for (uint8_t byte : segment->serialize()) {
+        fwrite(&byte, 1, 1, f);
     }
 }

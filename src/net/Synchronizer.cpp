@@ -12,7 +12,7 @@ using namespace dtcode::ffmpeg;
 using namespace dtcode::frame;
 using namespace std;
 
-Synchronizer::Synchronizer(shared_ptr<DistributionFactory> distributionFactory, shared_ptr<ConsensusFactory> consensusFactory, bool rot) 
+Synchronizer::Synchronizer(shared_ptr<DistributionFactory> distributionFactory, shared_ptr<ConsensusFactory> consensusFactory, bool root) 
 : consensusFactory(consensusFactory), distributionFactory(distributionFactory), root(root) {
 
 }
@@ -26,7 +26,7 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
     for (auto seg : segments_list) {
         segments.push_back(seg);
     }
-    auto consensus = consensusFactory->create();
+    cout << "On one node number of segments is " << segments.size() << endl;
     int index;
     map<int, SegmentPtr> index_segment_map;
     while ((index = distribution->nextIndex()) >= 0) {
@@ -41,27 +41,34 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
             }
             encoder->writeFrame(ff);
         }
+        cout << "Writing transformed segment on index " << index << endl;
         index_segment_map[index] = encoder->getSegment();
     
     }
+    segments.clear();
     bool finalized = false;
     while (!finalized) {
+        auto consensus = consensusFactory->create();
         int proposal;
         if (index_segment_map.empty()) proposal = -1;
         else proposal = index_segment_map.begin()->first;
+        cout << "Sending proposal for index " << proposal << endl;
         consensus->propose(proposal);
         int decision = consensus->getDecision();
+        cout << "Decision is " << decision << endl;
         if (decision < 0 ) finalized = true;
         else {
             SegmentPtr seg;
-    cout << (root ? "XXX" : "YYY") << " " << decision << " proposal=" << proposal <<endl;
-    cout.flush();
+            cout << (root ? "on root " : "worker ") << " " << decision << " proposal=" << proposal <<endl;
+            cout.flush();
             if (decision == proposal) {
                 seg = distribution->getSegment(proposal, (index_segment_map.begin()->second));
                 index_segment_map.erase(index_segment_map.begin());
+                segments.push_back(seg);
             }
             else {
                 seg = distribution->getSegment(decision);
+                segments.push_back(seg);
             }
             // segments[decision] = seg;
         }    

@@ -13,6 +13,8 @@ extern "C" {
 
 }
 
+#include <data/Segment.hpp>
+
 namespace dtcode::ffmpeg {
     class FFMpegVideoWriter : public dtcode::video::VideoWriter {
             const AVCodec *codec;
@@ -30,5 +32,6 @@ namespace dtcode::ffmpeg {
             FFMpegVideoWriter(std::string filename, std::string codec_name);
             ~FFMpegVideoWriter();
             void writeFrame(dtcode::data::FramePtr frame);
+            void writeSegment(dtcode::data::SegmentPtr segment);
     };
 }

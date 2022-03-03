@@ -19,7 +19,7 @@ namespace dtcode::net {
                 std::stringstream ss; 
                 ss << value;
                 send(ss.str());
-                return NodeComm(from_rank, to_rank);
+                return NodeComm(from_rank, to_rank, size);
             }
 
             NodeComm operator<<(std::vector<uint8_t> value);
@@ -28,7 +28,7 @@ namespace dtcode::net {
             NodeComm operator>>(T& value) {
                 std::stringstream ss(receive()); 
                 ss >> value;
-                return NodeComm(from_rank, to_rank);
+                return NodeComm(from_rank, to_rank, size);
             }
 
             NodeComm operator>>(std::vector<uint8_t>& value);

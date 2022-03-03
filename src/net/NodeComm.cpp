@@ -1,6 +1,9 @@
 
 #include <net/NodeComm.hpp>
 #include <mpi.h>
+
+#include <iostream>
+
 using namespace dtcode::net;
 using namespace std;
 
@@ -50,6 +53,14 @@ NodeComm NodeComm::operator>>(vector<uint8_t>& value) {
 }
 
 NodeComm NodeComm::operator<<(vector<uint8_t> value) {
+    if (to_rank == size) {
+        for (int i = 0; i<size; i++) {
+            if (i != from_rank) {
+                NodeComm(from_rank, i, size) << value;
+            }
+        }
+        return *this;
+    }
     uint8_t *data = new uint8_t[value.size()];
     copy(value.begin(), value.end(), data);
     MPI_Send(data, value.size(), MPI_BYTE, to_rank, 0, MPI_COMM_WORLD);
