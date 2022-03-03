@@ -16,6 +16,8 @@ namespace dtcode::net {
             int size();
             int rank();
 
+            void debug();
+
             template<class T>
             void root(T callable) {
                 if (rank() == 0) callable();
