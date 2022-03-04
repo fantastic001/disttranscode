@@ -51,12 +51,20 @@ NodeComm NodeComm::operator>>(vector<uint8_t>& value) {
     for (int i = 0; i<temp; i++) {
         value.push_back(var[i]);
     }
-    cout << "Received from=" << to_rank << " to="  << from_rank << " datasize=" << value.size() << endl;
+    cout << "MSG,R," << to_rank << ","  << from_rank << ",";
+    for (auto v : value) {
+        cout << hex << (int) v << " ";
+    }
+    cout << endl;
     return NodeComm(from_rank, to_rank, size);
 }
 
 NodeComm NodeComm::operator<<(vector<uint8_t> value) {
-    cout << "From: " << from_rank << " To: " << to_rank << " datasize: " << value.size() << endl;
+    cout << "MSG,S," << from_rank << ","  << to_rank << ",";
+    for (auto v : value) {
+        cout << hex << (int) v << " ";
+    }
+    cout << endl;
     if (to_rank == size) {
         for (int i = 0; i<size; i++) {
             if (i != from_rank) {
@@ -67,6 +75,9 @@ NodeComm NodeComm::operator<<(vector<uint8_t> value) {
     }
     uint8_t *data = new uint8_t[value.size()];
     copy(value.begin(), value.end(), data);
-    MPI_Send(data, value.size(), MPI_BYTE, to_rank, 0, MPI_COMM_WORLD);
+    MPI_Request request;
+    MPI_Status status;
+    MPI_Isend(data, value.size(), MPI_BYTE, to_rank, 0, MPI_COMM_WORLD, &request);
+    MPI_Wait(&request, &status);
     return NodeComm(from_rank, to_rank, size);
 }
