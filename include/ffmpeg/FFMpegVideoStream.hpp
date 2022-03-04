@@ -30,5 +30,6 @@ namespace dtcode::ffmpeg {
             FFMpegVideoStream(std::vector<uint8_t> serialized_data);
             ~FFMpegVideoStream();
             std::list<dtcode::data::SegmentPtr> parse();
+            std::vector<uint8_t> getData();
     };
 }

@@ -30,8 +30,10 @@ namespace dtcode::net {
                 }
                 auto result = proposals[0];
                 for (auto p : proposals) {
-                    if (result > p && p >= 0) {
-                        result = p;
+                    if (p >= 0) {
+                        if (result > p || result < 0) {
+                            result = p;
+                        }
                     }
                 }
                 return result;

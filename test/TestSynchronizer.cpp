@@ -49,7 +49,7 @@ class SynchronizerTest : public ::testing::Test {
 
 TEST_F(SynchronizerTest, test_will_call_distribute) {
     auto stream = make_shared<MockStream>();
-    EXPECT_CALL(*distribution, distribute(_)).Times(1).WillOnce(Return(list<SegmentPtr>()));
+    EXPECT_CALL(*distribution, distribute(_)).Times(1).WillOnce(Return(stream));
     EXPECT_CALL(*distribution, nextIndex()).Times(Exactly(1)).WillOnce(Return(-1));
     
     synchronizer->process(stream);
@@ -66,9 +66,8 @@ TEST_F(SynchronizerTest, test_will_decode_encode_filter) {
     EXPECT_CALL(*segment, nextFrame()).Times(Exactly(2))
         .WillOnce(Return(optional(frame)))
         .WillRepeatedly(Return(optional<FramePtr>()));
-    EXPECT_CALL(*distribution, distribute(_)).WillOnce(Return(list<SegmentPtr> {
-        segment,
-    }));
+    EXPECT_CALL(*stream, parse()).WillOnce(Return(list<SegmentPtr>{segment}));
+    EXPECT_CALL(*distribution, distribute(_)).WillOnce(Return(stream));
     EXPECT_CALL(*distribution, getSegment(0, _)).WillRepeatedly(Return(segment));
     EXPECT_CALL(*distribution, getSegment(1, _)).Times(Exactly(0));
     auto filter = make_shared<MockFilter>();
@@ -103,12 +102,14 @@ TEST_F(SynchronizerTest, test_two_synchronizers) {
     auto consensus1 = make_shared<MockConsensus>();
     auto distribution1 = make_shared<MockDistribution>();
     
-    EXPECT_CALL(*distributionFactory1, create()).WillOnce(Return(distribution1));
-    EXPECT_CALL(*consensusFactory1, create()).WillOnce(Return(consensus1));
-    EXPECT_CALL(*distribution1, distribute(_)).Times(Exactly(1)).WillOnce(Return(list<SegmentPtr> {
+    EXPECT_CALL(*stream, parse()).WillOnce(Return(list<SegmentPtr> {
         segment,
         segment1
     }));
+
+    EXPECT_CALL(*distributionFactory1, create()).WillOnce(Return(distribution1));
+    EXPECT_CALL(*consensusFactory1, create()).WillOnce(Return(consensus1));
+    EXPECT_CALL(*distribution1, distribute(_)).Times(Exactly(1)).WillOnce(Return(stream));
     EXPECT_CALL(*distribution1, getSegment(0, _)).WillRepeatedly(Return(segment));
     EXPECT_CALL(*distribution1, getSegment(1, _)).WillRepeatedly(Return(segment1));
     EXPECT_CALL(*distribution1, nextIndex()).Times(Exactly(2)).WillOnce(Return(1)).WillRepeatedly(Return(-1));
@@ -128,10 +129,7 @@ TEST_F(SynchronizerTest, test_two_synchronizers) {
         .WillOnce(Return(0))
         .WillOnce(Return(1))
         .WillOnce(Return(-1));
-    EXPECT_CALL(*distribution, distribute(_)).WillOnce(Return(list<SegmentPtr> {
-        segment,
-        segment1
-    }));
+    EXPECT_CALL(*distribution, distribute(_)).WillOnce(Return(stream));
     auto filter = make_shared<MockFilter>();
 
     auto synchronizer1 = make_shared<Synchronizer>(distributionFactory1, consensusFactory1, false);

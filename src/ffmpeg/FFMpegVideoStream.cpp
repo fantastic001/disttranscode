@@ -117,3 +117,7 @@ std::list<dtcode::data::SegmentPtr> FFMpegVideoStream::parse() {
     }
     return static_cast<list<SegmentPtr>>(segments);
 }
+
+vector<uint8_t> FFMpegVideoStream::getData() {
+    return serialized_data;
+}

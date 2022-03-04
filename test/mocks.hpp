@@ -21,6 +21,7 @@ using namespace testing;
 class MockStream : public Stream {
  public:
   MOCK_METHOD0(parse, list<SegmentPtr>());
+  MOCK_METHOD0(getData, std::vector<uint8_t>());
 };
 
 class MockSegment : public Segment {
@@ -41,7 +42,7 @@ class MockFrame : public Frame {
 };
 class MockDistribution : public dtcode::net::Distribution {
  public:
-  MOCK_METHOD1(distribute, std::list<SegmentPtr>(StreamPtr));
+  MOCK_METHOD1(distribute, StreamPtr(StreamPtr));
   MOCK_METHOD0(nextIndex, int());
   MOCK_METHOD1(getRank, int(int));
   MOCK_METHOD2(getSegment, SegmentPtr(int, SegmentPtr));

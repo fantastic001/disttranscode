@@ -17,58 +17,39 @@ namespace dtcode::net {
                 this->context = context;
                 next = -1;
             }
-            std::list<dtcode::data::SegmentPtr> distribute(dtcode::data::StreamPtr stream) {
+            dtcode::data::StreamPtr distribute(dtcode::data::StreamPtr stream) {
+                next = context->rank();
                 if (context->rank() == 0) {
-                    if (stream == nullptr) return std::list<dtcode::data::SegmentPtr>();
+                    if (stream == nullptr) return nullptr;
                     auto segments_list = stream->parse();
                     for (auto segment : segments_list) {
                         segments.push_back(segment);
                     }
-                    if (segments.size() == 0) return segments_list;
-                    for (int i = 1; i<context->size(); i++) {
-                        (*context)[i] << segments.size();
-                    }
-                    next = 0;
-                    for (int i = 0; i<segments.size(); i++) {
-                        auto data = segments[i]->serialize();
-                        int rank = i % context->size();
-                        if (rank != context->rank()) {
-                            (*context)[rank] << data;
-                            if (i < segments.size() - 1) 
-                            {
-                                (*context)[rank] << segments[i+1]->serialize();
-                            }
-                        }
-                    }
-                    return segments_list;
+                    if (segments.size() == 0) return stream;
+                    (*context)() << stream->getData();
+                    return stream;
                 }
                 else {
-                    int size; 
-                    (*context)[0] >> size;
-                    for (int i = context->rank(); i<size; i += context->size()) {
-                        std::vector<uint8_t> data, next_data;
-                        (*context)[0] >> data;
-                        (*context)[0] >> next_data;
-                        auto parsed = std::make_shared<dtcode::ffmpeg::FFMpegVideoStream>(data)->parse();
-                        if (parsed.size() > 0) segments.push_back(parsed.front());
-                        else {
-                            // well, let's make dummy segment :(
-                            auto encoder = dtcode::ffmpeg::FFMpegVideoEncoder();
-                            encoder.writeFrame(dtcode::frame::F(10, 10, [] (int c, int y, int x) {
-                                return 0;
-                            }));
-                            segments.push_back(encoder.getSegment());
-                        }
+                    std::vector<uint8_t> data_packets;
+                    (*context)[0] >> data_packets;
+                    auto stream = std::make_shared<dtcode::ffmpeg::FFMpegVideoStream>(data_packets);
+                    auto segment_list = stream->parse();
+                    for (auto seg : segment_list) {
+                        segments.push_back(seg);
                     }
-                    return std::list<dtcode::data::SegmentPtr>();
+                    return stream;
                 }
             }
             int getRank(int index) {
                 return index % context->size();
             }
             int nextIndex() {
-                if (next == segments.size()) return -1;
-                else return next++;
+                if (next >= segments.size()) return -1;
+                else {
+                    int tmp = next;
+                    next += context->size();
+                    return tmp;
+                }
             }
             dtcode::data::SegmentPtr getSegment(int index, dtcode::data::SegmentPtr toSend = nullptr) {
                 if (getRank(index) != context->rank()) {
@@ -89,8 +70,7 @@ namespace dtcode::net {
                 }
                 else {
                     if (toSend == nullptr) {
-                        auto my_segment = segments[(index - context->rank()) / context->size()];
-                        (*context)() << my_segment->serialize();
+                        auto my_segment = segments[index];
                         return my_segment;
                     }
                     else {
