@@ -41,13 +41,16 @@ FFMpegVideoWriter::FFMpegVideoWriter(std::string filename, std::string codec_nam
 }
 
 FFMpegVideoWriter::~FFMpegVideoWriter() {
-    encode(c, NULL, pkt, f);
-    if (codec->id == AV_CODEC_ID_MPEG1VIDEO || codec->id == AV_CODEC_ID_MPEG2VIDEO)
-        fwrite(endcode, 1, sizeof(endcode), f);    fclose(f);
+    if (initialized) {
+        encode(c, NULL, pkt, f);
+        if (codec->id == AV_CODEC_ID_MPEG1VIDEO || codec->id == AV_CODEC_ID_MPEG2VIDEO)
+            fwrite(endcode, 1, sizeof(endcode), f);    fclose(f);
 
-    avcodec_free_context(&c);
-    av_frame_free(&frame);
-    av_packet_free(&pkt);
+        avcodec_free_context(&c);
+        av_frame_free(&frame);
+        av_packet_free(&pkt);
+    }
+    
 
 }
 
@@ -131,7 +134,7 @@ void FFMpegVideoWriter::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket
 
     ret = avcodec_send_frame(enc_ctx, frame);
     if (ret < 0) {
-        fprintf(stderr, "Error sending a frame for encoding\n");
+        fprintf(stderr, "Error %d sending a frame for encoding\n", ret);
         exit(1);
     }
 

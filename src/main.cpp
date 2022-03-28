@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
             writer.writeSegment(seg);
         }
     }
+    return 0;
 }
 
 

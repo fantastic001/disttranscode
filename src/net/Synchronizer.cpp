@@ -6,6 +6,7 @@
 
 #include <iostream>
 
+
 using namespace dtcode::net; 
 using namespace dtcode::data;
 using namespace dtcode::ffmpeg;
@@ -56,9 +57,11 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
             cout << (root ? "on root " : "worker ") << " " << decision << " proposal=" << proposal <<endl;
             cout.flush();
             if (decision == proposal) {
+                cout << "Sending segment " << decision << endl;
                 seg = distribution->getSegment(proposal, (index_segment_map.begin()->second));
                 index_segment_map.erase(index_segment_map.begin());
                 segments.push_back(seg);
+                cout << "Segment " << decision << " sent\n";
             }
             else {
                 seg = distribution->getSegment(decision);
