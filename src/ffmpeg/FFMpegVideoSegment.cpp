@@ -83,5 +83,15 @@ std::list<FramePtr> FFMpegVideoSegment::decodeKeyFrames() {
 }
 
 vector<uint8_t> FFMpegVideoSegment::serialize() {
-    return serialized;
+    auto data = serialized;
+    data.push_back(0x00);
+    data.push_back(0x00);
+    data.push_back(0x01);
+    data.push_back(0xb7);
+    data.push_back(0x00);
+    data.push_back(0x00);
+    data.push_back(0x00);
+    data.push_back(0x00);
+    data.push_back(0x00);
+    return data;
 }
