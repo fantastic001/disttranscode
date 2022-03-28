@@ -11,31 +11,18 @@ namespace dtcode::net {
     class UniformFloodingConsensus : public Consensus {
             std::shared_ptr<T> context;
             std::vector<int> proposals;
+            int nextDecision;
         public:
             UniformFloodingConsensus(std::shared_ptr<T> context) {
                 this->context = context;
+                nextDecision = 0;
             }
             void propose(int index) {
-                (*context)() << "PROPOSAL " << index;
-                proposals.push_back(index);
+
             }
             int getDecision() {
-                for (int i = 0; i<context->size(); i++) {
-                    std::string msg;
-                    int proposedBy;
-                    if (i != context->rank()) {
-                        (*context)[i] >> msg >> proposedBy;
-                        proposals.push_back(proposedBy);
-                    }
-                }
-                auto result = proposals[0];
-                for (auto p : proposals) {
-                    if (p >= 0) {
-                        if (result > p || result < 0) {
-                            result = p;
-                        }
-                    }
-                }
+                auto result = nextDecision;
+                nextDecision++;
                 return result;
             }
     };

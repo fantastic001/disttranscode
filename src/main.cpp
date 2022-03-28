@@ -71,10 +71,12 @@ int main(int argc, char** argv) {
     }
     auto stream = make_shared<FFMpegVideoStream>(parser.getInputLocation());
     auto segments = sync->process(stream);
-    
-    FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
-    for (auto seg : segments) {
-        writer.writeSegment(seg);
+    cout << "Node: " << context->rank() << " finished processing\n";
+    if (context->rank() == 0) {
+        FFMpegVideoWriter writer(parser.getOutputLocation(), "mpeg4");
+        for (auto seg : segments) {
+            writer.writeSegment(seg);
+        }
     }
 }
 

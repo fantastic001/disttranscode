@@ -20,8 +20,10 @@ Synchronizer::Synchronizer(shared_ptr<DistributionFactory> distributionFactory, 
 vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
     auto distribution = distributionFactory->create();
     stream = distribution->distribute(stream);
+    int size = stream->parse().size();
     int index;
     map<int, SegmentPtr> index_segment_map;
+    auto consensus = consensusFactory->create();
     while ((index = distribution->nextIndex()) >= 0) {
         auto segment = distribution->getSegment(index);
         cout << "Segment index " << index << endl;
@@ -41,7 +43,6 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
     std::vector<dtcode::data::SegmentPtr> segments;
     bool finalized = false;
     while (!finalized) {
-        auto consensus = consensusFactory->create();
         int proposal;
         if (index_segment_map.empty()) proposal = -1;
         else proposal = index_segment_map.begin()->first;
@@ -49,7 +50,7 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
         consensus->propose(proposal);
         int decision = consensus->getDecision();
         cout << "Decision is " << std::dec << decision << endl;
-        if (decision < 0 ) finalized = true;
+        if (decision >= size) finalized = true;
         else {
             SegmentPtr seg;
             cout << (root ? "on root " : "worker ") << " " << decision << " proposal=" << proposal <<endl;
