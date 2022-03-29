@@ -37,10 +37,13 @@ set(SOURCES
 
     src/filters/black/BlackFilter.cpp
     src/filters/grayscale/GrayscaleFilter.cpp
+    src/filters/resize/ResizeFilter.cpp
 
     src/net/NodeComm.cpp
     src/net/NodeContext.cpp
     src/net/Synchronizer.cpp
+
+    src/frame/BilinearInterpolation.cpp
 
 )
 
