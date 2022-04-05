@@ -109,8 +109,9 @@ shared_ptr<FFMpegVideoSegment> FFMpegVideoEncoder::getSegment() {
         if (ret < 0)
             exit(1);
         for (int channel = 0; channel < m_frame->getChannelCount(); channel++) {
-            for (int y = 0; y < c->height; y++) {
-                for (int x = 0; x < c->width; x++) {
+            int k = channel == 0 ? 1 : 2;
+            for (int y = 0; y < c->height/k; y++) {
+                for (int x = 0; x < c->width/k; x++) {
                     frame->data[channel][y * frame->linesize[channel] + x] = m_frame->getData(channel, pos2d(y,x));
                 }
             }
