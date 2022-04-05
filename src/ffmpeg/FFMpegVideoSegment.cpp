@@ -95,3 +95,7 @@ vector<uint8_t> FFMpegVideoSegment::serialize() {
     data.push_back(0x00);
     return data;
 }
+
+int FFMpegVideoSegment::getFrameCount() {
+    return packets.size();
+}

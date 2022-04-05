@@ -95,6 +95,7 @@ struct NetworkCommFake {
         }
         return *this;
     }
+
 };
 
 struct NetworkFake
@@ -118,5 +119,9 @@ struct NetworkFake
     }
     int rank() {
         return net->rank;
+    }
+
+    void share(int sender, int& variable) {
+
     }
 };

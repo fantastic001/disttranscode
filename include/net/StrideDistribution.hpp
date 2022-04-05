@@ -11,34 +11,48 @@ namespace dtcode::net {
             std::shared_ptr<T> context;
             int next;
             std::vector<dtcode::data::SegmentPtr> segments;
+            std::vector<int> accumulated_frame_count;
         public:
             
             StrideDistribution(std::shared_ptr<T> context) {
                 this->context = context;
                 next = -1;
             }
+
+            virtual int getFrameCountBeforeThisSegment(int segment_index) {
+                return accumulated_frame_count[segment_index]; 
+            }
             dtcode::data::StreamPtr distribute(dtcode::data::StreamPtr stream) {
                 next = context->rank();
                 if (context->rank() == 0) {
                     if (stream == nullptr) return nullptr;
+                    int segment_index = 0;
                     auto segments_list = stream->parse();
                     for (auto segment : segments_list) {
+                        int frameCount = segment_index == 0 ? 0 : segments.back()->getFrameCount();
+                        accumulated_frame_count.push_back(
+                            segment_index == 0 ? 0 : accumulated_frame_count[segment_index - 1] +  frameCount
+                        );
                         segments.push_back(segment);
+                        segment_index++;
                     }
                     if (segments.size() == 0) return stream;
                     (*context)() << stream->getData();
-                    return stream;
                 }
                 else {
                     std::vector<uint8_t> data_packets;
                     (*context)[0] >> data_packets;
-                    auto stream = std::make_shared<dtcode::ffmpeg::FFMpegVideoStream>(data_packets);
+                    stream = std::make_shared<dtcode::ffmpeg::FFMpegVideoStream>(data_packets);
                     auto segment_list = stream->parse();
                     for (auto seg : segment_list) {
                         segments.push_back(seg);
                     }
-                    return stream;
+                    accumulated_frame_count.resize(segments.size());
                 }
+                for (int i = 0; i<accumulated_frame_count.size(); i++) {
+                    context->share(0, accumulated_frame_count[i]);
+                }
+                return stream;
             }
             int getRank(int index) {
                 return index % context->size();

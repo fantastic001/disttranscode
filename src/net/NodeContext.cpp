@@ -36,3 +36,7 @@ void NodeContext::debug()
     while (0 == i)
         sleep(5);
 }
+
+void NodeContext::share(int source, int& variable) {
+    MPI_Bcast(&variable, 1, MPI_INT, source, MPI_COMM_WORLD);
+}

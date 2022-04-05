@@ -46,6 +46,7 @@ class MockDistribution : public dtcode::net::Distribution {
   MOCK_METHOD0(nextIndex, int());
   MOCK_METHOD1(getRank, int(int));
   MOCK_METHOD2(getSegment, SegmentPtr(int, SegmentPtr));
+  MOCK_METHOD1(getFrameCountBeforeThisSegment, int(int));
 };
 class MockConsensus : public dtcode::net::Consensus {
  public:

@@ -27,19 +27,20 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
     auto consensus = consensusFactory->create();
     while ((index = distribution->nextIndex()) >= 0) {
         auto segment = distribution->getSegment(index);
-        cout << "Segment index " << index << endl;
+        cout << "Segment index " << index << " after " << distribution->getFrameCountBeforeThisSegment(index)<< " frames\n";
         optional<FramePtr> frame; 
         auto encoder = make_shared<FFMpegVideoEncoder>();
+        int frame_counter = 0;
         while ((frame = segment->nextFrame()).has_value()) {
             auto ff = frame.value();
             for (auto filter : filters) {
                 ff = filter->filter(ff);
             }
+            frame_counter++;
             encoder->writeFrame(ff);
         }
         cout << "Writing transformed segment on index " << index << endl;
         index_segment_map[index] = encoder->getSegment();
-    
     }
     std::vector<dtcode::data::SegmentPtr> segments;
     bool finalized = false;

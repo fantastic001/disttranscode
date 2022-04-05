@@ -27,5 +27,7 @@ namespace dtcode::ffmpeg {
             std::list<dtcode::data::FramePtr> decodeKeyFrames();
             std::vector<uint8_t> serialize();
 
+            int getFrameCount();
+
     };
 }

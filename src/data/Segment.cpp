@@ -14,3 +14,7 @@ list<shared_ptr<Frame>> Segment::decodeAllFrames() {
         else return result;
     }
 }
+
+int Segment::getFrameCount() {
+    return decodeAllFrames().size();
+}

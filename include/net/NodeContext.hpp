@@ -23,6 +23,8 @@ namespace dtcode::net {
                 if (rank() == 0) callable();
             }
 
+            void share(int source, int& variable);
+
             NodeComm operator[] (int _rank) {
                 return NodeComm(rank(), _rank, size());
             }

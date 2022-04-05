@@ -10,6 +10,7 @@ namespace dtcode::net {
             virtual int getRank(int segmentIndex) =0;
             virtual int nextIndex() =0;
             virtual dtcode::data::SegmentPtr getSegment(int index, dtcode::data::SegmentPtr toSend = nullptr) =0;
+            virtual int getFrameCountBeforeThisSegment(int segment_index) =0;
     };
     using DistributionPtr = std::shared_ptr<Distribution>;
 }
