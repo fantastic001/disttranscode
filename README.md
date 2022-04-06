@@ -19,6 +19,11 @@ output can be:
 * chromecast 
 * video played on master node 
 
+
+For instance, to resize video a.mp4 to 1000x1000 and distribute that work on two nodes and write result as b.mp4:
+
+    mpirun -n 2 ./disttranscode -i a.mp4 -f resize 1920 1080  b.mp4
+
 # Dependencies
 
 * libav
