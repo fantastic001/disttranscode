@@ -34,10 +34,11 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
         while ((frame = segment->nextFrame()).has_value()) {
             auto ff = frame.value();
             for (auto filter : filters) {
-                ff = filter->filter(ff);
+                ff = filter->filter(ff, distribution->getFrameCountBeforeThisSegment(index) + frame_counter);
             }
             frame_counter++;
             encoder->writeFrame(ff);
+            frame_counter++;
         }
         cout << "Writing transformed segment on index " << index << endl;
         index_segment_map[index] = encoder->getSegment();

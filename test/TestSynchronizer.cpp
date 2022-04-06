@@ -72,7 +72,7 @@ TEST_F(SynchronizerTest, test_will_decode_encode_filter) {
     EXPECT_CALL(*distribution, getSegment(1, _)).Times(Exactly(0));
     auto filter = make_shared<MockFilter>();
     synchronizer->addFilter(filter);
-    EXPECT_CALL(*filter, filter(frame)).Times(Exactly(1)).WillOnce(Return(frame));
+    EXPECT_CALL(*filter, filter(frame, _)).Times(Exactly(1)).WillOnce(Return(frame));
     EXPECT_CALL(*distribution, nextIndex()).Times(Exactly(2))
         .WillOnce(Return(0))
         .WillRepeatedly(Return(-1));
@@ -136,7 +136,7 @@ TEST_F(SynchronizerTest, test_two_synchronizers) {
 
     synchronizer1->addFilter(filter);
     synchronizer->addFilter(filter);
-    EXPECT_CALL(*filter, filter(frame)).Times(Exactly(2)).WillRepeatedly(Return(frame));
+    EXPECT_CALL(*filter, filter(frame, _)).Times(Exactly(2)).WillRepeatedly(Return(frame));
     synchronizer->process(stream);
     synchronizer1->process(stream);
 }

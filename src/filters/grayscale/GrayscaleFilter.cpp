@@ -9,7 +9,7 @@ using namespace dtcode::frame;
 
 class GrayscaleFilter : public Filter {
     public:
-        FramePtr filter(FramePtr frame) {
+        FramePtr filter(FramePtr frame, int frameNumber) {
             return F(frame->getDim()[0], frame->getDim()[1], 
                 [frame] (int channel, int y, int x) {
                     return (channel == 0) * frame->getData(0, pos2d(y,x))

@@ -67,5 +67,5 @@ class MockDistributionFactory : public dtcode::net::DistributionFactory {
 
 class MockFilter : public Filter {
   public:
-    MOCK_METHOD1(filter, FramePtr(FramePtr));
+    MOCK_METHOD2(filter, FramePtr(FramePtr, int));
 };

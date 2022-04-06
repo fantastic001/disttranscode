@@ -14,7 +14,7 @@ class ResizeFilter : public Filter {
         ResizeFilter(int height, int width) : height(height), width(width) {
 
         }
-        FramePtr filter(FramePtr frame) {
+        FramePtr filter(FramePtr frame, int frameNumber) {
             return F(height, width, 
                 [frame, this] (int channel, int y, int x) {
                     auto interp = make_shared<BilinearInterpolation>(frame);
