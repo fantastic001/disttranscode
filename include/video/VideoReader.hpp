@@ -5,6 +5,6 @@
 
 namespace dtcode::video {
     class VideoReader {
-        dtcode::data::Stream getStream() =0;
+        virtual dtcode::data::Stream getStream() =0;
     };
 }

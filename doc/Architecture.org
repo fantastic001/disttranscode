@@ -16,11 +16,11 @@ the usage of the system would be as follows:
 
 and available filters which can be applied would be:
 
-+ id width height - copy video
-+ grayscale width height - convert video to grayscale
-+ resize width height newwidth newheight - resize video
-+ watermark width height x y text fontsize color - put watermark on video
-+ image width height x y image-location - put image on whole video
++ id - copy video
++ grayscale - convert video to grayscale
++ resize newwidth newheight - resize video
++ watermark x y text fontsize color startFrame endFrame - put watermark on video
++ image x y image-location startFrame endFrame - put image on whole video
 
  
 * System overview 
@@ -31,24 +31,17 @@ architecture pattern would be pipeline
 
 ** Components
 
- | Subsystem        | External dependencies | Consumes subsystem(s)                          | Provides service to subsystem(s)               | Access through   |
- |------------------+-----------------------+------------------------------------------------+------------------------------------------------+------------------|
- | argument parsing | argh                  |                                                | DataInputManager, FilterManager, OutputManager | observer pattern |
- | NodeManager      | OpenMPI               | FilterManager, DataInputManager, OutputManager | Filter plugin                                  | observer pattern |
- | other nodes      |                       |                                                |                                                | network          |
- | FilterManager    | dlopen                | argument parsing                               | NodeManager                                    | observer pattern |
- | DataInputManager | libav and ffmpeg      | argument parsing                               | NodeManager                                    | observer pattern |
- | OutputManager    | libav and ffmpeg      | argument parsing                               | NodeManager                                    | observer pattern |
- | Logging          | glog                  |                                                | all                                            | function call    |
-
-
-+ NodeManager
-  + keeps track of all nodes connected to master
-  + when Stream is loaded, divides it into individual nodes for further processing
-+ all components which access each other through observer pattern means that subsystem which PROVIDES service to subsystem X is actually providing Listener interface to X
-+ for every filter managed by filter manager, individual plugins are loaded dynamically
-+ DataInputManager and OutputManager have plugins for loading individual formats and outputing individual formats
-  + internal representation is through Stream object
+ | Subsystem   | External dependencies | Consumes subsystem(s)    | Description                                                                    |
+ |-------------+-----------------------+--------------------------+--------------------------------------------------------------------------------|
+ | cmd         |                       | data, log                | Argument parsing and serializing given parameters                              |
+ | net         | OpenMPI               | frame, data, ffmpeg, log | Node communication, data distribution and synchronization between nodes        |
+ | other nodes |                       | other nodes              | Other nodes in network                                                         |
+ | data        |                       |                          | Filter definitions, abstract data definitions                                  |
+ | Log         | glog                  |                          | Logging capabilities and debugging capabilities                                |
+ | ffmpeg      | libavcodec            | data, log                | FFMpeg wrapper classes                                                         |
+ | video       |                       | data, log, frame         | Video reading and writing abstractions                                         |
+ | frame       |                       | data                     | Frame transformation utilities                                                 |
+ | plugin      | dlopen, env vars      | data, log, video         | Plugin loading, management for community filters and video writers and readers |
 
 
 
@@ -77,76 +70,6 @@ since segments come in order, they can calculate when to write
 
 
 
-TODO:
-
-+ add broadcast to context as =operator<<= to send message to everyone
-+ add possibility to receive message from anyone =context() >> message=
-+ add =context.broadcast(rank) >> data= ability to broadcast message from process =rank= and to write it to data on all machines
-+ Implement =FFMpegVideoDecoder= which inherits =VideoWriter= and has method =getSegment() -> Segment=
-+ define =Consensus= interface and implement =UniformFloodingConsensus=
-+ define =Distribution= interface =distribute: Stream -> IO= and =getRank: Int as index -> int as rank= and =next(): -> Int= 
-+ implement =StrideDistribution(Context)=
-+ Implement =Synchronizer= which has:
-  + distribution implementation
-  + consensus implementation
-  + writer implementation
-+ Synchronizer basically does:
-  + takes stream
-  + distributes it
-  + repeatedly calls consensus
-    + calls propose, in order to do that, it has to decode and transform and encode back frames and then proposes index of that segment
-    + if we already have index of some segment which is computed already, we decode, transform and encode other segments and send this current index immediately
-    + to get next segment to work on, call =distribution.next(context)= to get next index for given rank
-    + retrieves next segment index by calling =getDecision=, if it is rank=0 then do the following:
-      + from segment it calculates rank of process
-      + gets segment from given process
-      + writes it into file
-    + if it is rank=0 or any other rank
-      + if decided index is yours, send segment to 0
-      + else do nothing
-
-
-consensus
-
-
-#+begin_example
-
-  constructor(context):
-	  round = 1
-	  N = context.size()
-	  decision = null
-	  receivedfrom is array of integer ranks of size N
-	  proposals is array of empty sets of size N
-	  receivedfrom[0] = all processes ranks
-
-  propose(value):
-	  proposals[1].add(v)
-	  context << "PROPOSAL" << 1 << proposals[1]
-
-  getDecision():
-      while decision == null:
-	  for i = 0 to context.size():
-	      int r, set ps
-	      string msg
-	      context(i) >> msg
-	      if (msg == "PROPOSAL"):
-		 context(i) >> r >> ps
-		 receivedFrom[r].add(i)
-		 proposals[r].union(ps)
-		 if receivedFrom[round].size() == context.size() and decision == null:
-		    if receivedFrom[round] == receivedFrom[round-1]:
-		       decision = min(proposals[round])
-		       context << "DECIDED" << decision
-		       return decision
-		    else:
-		       round++
-		       context << "PROPOSAL" << round << proposals[round-1]
-
-	      else if msg == "DECIDED" and decision == null:
-		   context(i) >> decision
-		   context << decision
-		   return decision
-#+end_example
 
 ** Data structures used 
 
@@ -245,11 +168,28 @@ The stream will be represented as a vector of segments where every segment is ac
 + filters are implemented as plugins where every plugin contains:
   + class inheriting Filter base class
   + class inheriting FilterFactory which will create given object
-  + =create_filter_factory_instance= function which returns filter factory implemented
+  + Filter argument parser class inheriting =FilterArgumentParser= which is aimed to parse given parameters for filter and then call specific factory
+  + =create_filter_parser_instance= function which returns filter parser implemented
++ writers and readers are implemented by:
+  + inheriting =VideoReader= / =VideoWriter= class
+  + creating =create_reader_instance= / =create_writer_instance= function which returns object of implemented class, both of them receive string path of file
+
+
 
 ** Plugin installation and management 
 
-+ just putting so file in particular directory
++ plugin is determined as directory containing:
+  + manifest.ini file which has fields:
+    + type
+      + filter
+      + reader
+      + writer
+    + for filter plugin:
+      + name
+      + shared object filename in the same directory
+    + for reader / writer
+      + file extensions which are supported
+      + filename of shared object file 
    
 * Build system 
 
@@ -258,7 +198,7 @@ The stream will be represented as a vector of segments where every segment is ac
 
 * Profiling 
 
-+ vargrind will be used for measurements
++ valgrind will be used for measurements
   
 * Testing frameworks 
 
@@ -282,12 +222,12 @@ The stream will be represented as a vector of segments where every segment is ac
 
 * Existing technologies dependencies 
 
-+ https://github.com/adishavit/argh
 + glog
 + google test
 + docker for system testing
 + libav
 + ffmpeg
 + OpenMPI
++ cimg
   
 * References
