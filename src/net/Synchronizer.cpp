@@ -27,7 +27,10 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
     auto consensus = consensusFactory->create();
     while ((index = distribution->nextIndex()) >= 0) {
         auto segment = distribution->getSegment(index);
-        cout << "Segment index " << index << " after " << distribution->getFrameCountBeforeThisSegment(index)<< " frames\n";
+        cout 
+            << 100 * index / size 
+            << "% Segment index " << index 
+            << " after " << distribution->getFrameCountBeforeThisSegment(index)<< " frames\r";
         optional<FramePtr> frame; 
         auto encoder = make_shared<FFMpegVideoEncoder>();
         int frame_counter = 0;
@@ -40,30 +43,24 @@ vector<SegmentPtr> Synchronizer::process(StreamPtr stream) {
             encoder->writeFrame(ff);
             frame_counter++;
         }
-        cout << "Writing transformed segment on index " << index << endl;
         index_segment_map[index] = encoder->getSegment();
     }
+    cout << endl;
     std::vector<dtcode::data::SegmentPtr> segments;
     bool finalized = false;
     while (!finalized) {
         int proposal;
         if (index_segment_map.empty()) proposal = -1;
         else proposal = index_segment_map.begin()->first;
-        cout << "Sending proposal for index " << proposal << endl;
         consensus->propose(proposal);
         int decision = consensus->getDecision();
-        cout << "Decision is " << std::dec << decision << endl;
         if (decision >= size) finalized = true;
         else {
             SegmentPtr seg;
-            cout << (root ? "on root " : "worker ") << " " << decision << " proposal=" << proposal <<endl;
-            cout.flush();
             if (decision == proposal) {
-                cout << "Sending segment " << decision << endl;
                 seg = distribution->getSegment(proposal, (index_segment_map.begin()->second));
                 index_segment_map.erase(index_segment_map.begin());
                 segments.push_back(seg);
-                cout << "Segment " << decision << " sent\n";
             }
             else {
                 seg = distribution->getSegment(decision);
