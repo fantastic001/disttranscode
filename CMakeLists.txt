@@ -34,6 +34,8 @@ set(SOURCES
     src/ffmpeg/FFMpegVideoSegment.cpp
     src/ffmpeg/FFMpegVideoStream.cpp
     src/ffmpeg/FFMpegVideoWriter.cpp
+    src/ffmpeg/FFMpegVideoReader.cpp
+    src/ffmpeg/utils.cpp
 
     src/filters/black/BlackFilter.cpp
     src/filters/grayscale/GrayscaleFilter.cpp

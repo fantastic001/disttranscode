@@ -7,6 +7,7 @@
 #include <ffmpeg/FFMpegVideoWriter.hpp>
 #include <ffmpeg/FFMpegVideoEncoder.hpp>
 #include <ffmpeg/FFMpegVideoStream.hpp>
+#include <ffmpeg/FFMpegVideoReader.hpp>
 #include <frame/FrameF.hpp>
 
 #include <data/FilterManager.hpp>
@@ -69,7 +70,12 @@ int main(int argc, char** argv) {
     for (auto filter : filters) {
         sync->addFilter(filter);
     }
-    auto stream = make_shared<FFMpegVideoStream>(parser.getInputLocation());
+    auto reader = make_shared<FFMpegVideoReader>(parser.getInputLocation());
+    auto stream = reader->getVideoStream();
+    if (stream == nullptr) {
+        cerr << "Error while opning file\n";
+        return 1;
+    }
     auto segments = sync->process(stream);
     cout << "Node: " << context->rank() << " finished processing\n";
     if (context->rank() == 0) {
