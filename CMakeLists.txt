@@ -58,6 +58,22 @@ set(TEST_SOURCES
 
 )
 
+set(UTILITIES
+    generate_test_file
+)
+
+foreach(utility ${UTILITIES})
+    add_executable(${utility} ${SOURCES} utilities/${utility}.cpp)
+
+    if(${MPI_FOUND})
+        target_link_libraries(${utility} PUBLIC MPI::MPI_CXX)
+    endif(${MPI_FOUND})
+
+    target_link_libraries(${utility} PUBLIC PkgConfig::LIBAV )
+
+endforeach(utility ${UTILITIES})
+
+
 add_executable(disttranscode ${SOURCES} src/main.cpp)
 
 add_executable(testDisttranscode 
