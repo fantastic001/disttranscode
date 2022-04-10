@@ -23,7 +23,7 @@ vector<int> FFMpegVideoFrame::getDim() {
     return vector<int> {frame->height, frame->width};
 }
 
-unsigned char FFMpegVideoFrame::getData(int channel,std::vector<int> position) {
+unsigned char FFMpegVideoFrame::getData(int channel,const std::vector<int>& position) {
     return *(frame->data[channel] + position[0]*frame->linesize[channel] + position[1]);
 }
 

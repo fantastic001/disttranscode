@@ -20,7 +20,7 @@ int main() {
         cout << "   "<< 100 * i / size << "% Generated\r";
         cout.flush();
         writer.writeFrame(F(1080, 1920, [i] (int channel, int x, int y) {
-            return rgb2yuv(i < 250  ? 1 : 0, 0, 0, channel);
+            return rgb2yuv(i < FRAMERATE * DURATION_SEC / 2  ? 1 : 0, 0, 0, channel);
         }));
     }
     cout << endl;

@@ -102,6 +102,11 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
         }
 
     }
+
+    // optimization - allocating vector every time we call pos2d is too expensive 
+    std::vector<int> position;
+    position.resize(2);
+
     ret = av_frame_make_writable(frame);
     if (ret < 0)
         exit(1);
@@ -114,9 +119,9 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
     /* Y */
     for (int channel = 0; channel < m_frame->getChannelCount(); channel++) {
         int k = channel == 0 ? 1 : 2;
-        for (y = 0; y < c->height/k; y++) {
-            for (x = 0; x < c->width/k; x++) {
-                frame->data[channel][y * frame->linesize[channel] + x] = m_frame->getData(channel, pos2d(y,x));
+        for (position[0] = 0; position[0] < c->height/k; position[0]++) {
+            for (position[1] = 0; position[1] < c->width/k; position[1]++) {
+                frame->data[channel][position[0] * frame->linesize[channel] + position[1]] = m_frame->getData(channel, position);
             }
         }
     }

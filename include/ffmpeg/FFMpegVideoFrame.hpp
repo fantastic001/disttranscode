@@ -20,7 +20,7 @@ namespace dtcode::ffmpeg {
 
             int getChannelCount();
             std::vector<int> getDim();
-            unsigned char getData(int channel,std::vector<int> position);
+            unsigned char getData(int channel,const std::vector<int>& position);
 
             bool isKeyFrame();
     };

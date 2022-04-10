@@ -22,7 +22,7 @@ namespace dtcode::frame {
             std::vector<int> getDim() {
                 return dtcode::data::pos2d(height, width);
             }
-            unsigned char getData(int channel,std::vector<int> position) {
+            unsigned char getData(int channel,const std::vector<int>& position) {
                 return f(channel, position[0], position[1]);
             }
             bool isKeyFrame() {

@@ -10,7 +10,7 @@ namespace dtcode::data {
         public:
             virtual int getChannelCount() = 0;
             virtual std::vector<int> getDim() =0;
-            virtual unsigned char getData(int channel,std::vector<int> position) =0;
+            virtual unsigned char getData(int channel,const std::vector<int>& position) =0;
             virtual bool isKeyFrame() =0;
     };
     

@@ -19,7 +19,7 @@ namespace dtcode::ffmpeg {
     class FFMpegVideoWriter : public dtcode::video::VideoWriter {
             const AVCodec *codec;
             AVCodecContext *c= NULL;
-            int i, ret, x, y;
+            int i, ret;
             FILE *f;
             AVFrame *frame;
             AVPacket *pkt;
