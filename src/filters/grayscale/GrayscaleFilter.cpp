@@ -8,11 +8,24 @@ using namespace dtcode::data;
 using namespace dtcode::frame;
 
 class GrayscaleFilter : public Filter {
+        bool first_frame;
+        vector<int> dim;
+        vector<int> position;
     public:
+        GrayscaleFilter() {
+            first_frame = true;
+            position.resize(2);
+        }
         FramePtr filter(FramePtr frame, int frameNumber) {
-            return F(frame->getDim()[0], frame->getDim()[1], 
-                [frame] (int channel, int y, int x) {
-                    return (channel == 0) * frame->getData(0, pos2d(y,x))
+            if (first_frame) {
+                dim = frame->getDim();
+                first_frame = false;
+            }
+            return F(dim[0], dim[1], 
+                [frame, this] (int channel, int y, int x) {
+                    position[0] = y;
+                    position[1] = x;
+                    return (channel == 0) * frame->getData(0, position)
                         + (channel == 1) * 127
                         + (channel == 2) * 127
                     ;
