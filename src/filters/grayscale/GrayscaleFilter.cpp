@@ -1,11 +1,33 @@
 
 #include <data/FilterManager.hpp>
 
-#include <frame/FrameF.hpp>
 
 using namespace std; 
 using namespace dtcode::data; 
-using namespace dtcode::frame;
+
+class GrayscaleFrame : public Frame {
+        FramePtr source; 
+        std::vector<int> dim;
+    public:
+        GrayscaleFrame(FramePtr source) : source(source) {
+            dim = source->getDim();
+        }
+        int getChannelCount() {
+            return 3;
+        }
+        std::vector<int> getDim() {
+            return dim;
+        }
+        unsigned char getData(int channel,const std::vector<int>& position) {
+            return (channel == 0) * source->getData(0, position)
+                        + (channel == 1) * 127
+                        + (channel == 2) * 127
+                    ;
+        }
+        bool isKeyFrame() {
+            return source->isKeyFrame();
+        }
+};
 
 class GrayscaleFilter : public Filter {
         bool first_frame;
@@ -17,19 +39,7 @@ class GrayscaleFilter : public Filter {
             position.resize(2);
         }
         FramePtr filter(FramePtr frame, int frameNumber) {
-            if (first_frame) {
-                dim = frame->getDim();
-                first_frame = false;
-            }
-            return F(dim[0], dim[1], 
-                [frame, this] (int channel, int y, int x) {
-                    position[0] = y;
-                    position[1] = x;
-                    return (channel == 0) * frame->getData(0, position)
-                        + (channel == 1) * 127
-                        + (channel == 2) * 127
-                    ;
-            });
+            return make_shared<GrayscaleFrame>(frame);
         }
 };
 

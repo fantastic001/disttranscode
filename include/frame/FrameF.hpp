@@ -9,18 +9,22 @@ namespace dtcode::frame {
     class FrameF : public dtcode::data::Frame {
             unsigned char *data;
             int height, width;
+            std::vector<int> dim; 
             std::function<unsigned char (int, int, int)> f;
         public:
             FrameF(int height, int width,const F& f) {
                 this->f = f;
                 this->height = height;
                 this->width = width;
+                dim.resize(2);
+                dim[0] = height;
+                dim[1] = width;
             }
             int getChannelCount() {
                 return 3;
             }
             std::vector<int> getDim() {
-                return dtcode::data::pos2d(height, width);
+                return dim;
             }
             unsigned char getData(int channel,const std::vector<int>& position) {
                 return f(channel, position[0], position[1]);
