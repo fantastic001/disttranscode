@@ -70,11 +70,14 @@ int main(int argc, char** argv) {
     for (auto filter : filters) {
         sync->addFilter(filter);
     }
-    auto reader = make_shared<FFMpegVideoReader>(parser.getInputLocation());
-    auto stream = reader->getVideoStream();
-    if (stream == nullptr) {
-        cerr << "Error while opning file\n";
-        return 1;
+    StreamPtr stream;
+    if (context->rank() == 0) {
+        auto reader = make_shared<FFMpegVideoReader>(parser.getInputLocation());
+        stream = reader->getVideoStream();
+        if (stream == nullptr) {
+            cerr << "Error while opning file\n";
+            return 1;
+        }
     }
     auto segments = sync->process(stream);
     cout << "Node: " << context->rank() << " finished processing\n";
