@@ -22,7 +22,16 @@ function build_cmake() {
 }
 
 function build_clang() {
-
+    mkdir build
+    cd build 
+    cmake \
+        -DLLVM_ENABLE_PROJECTS=clang \
+        -G "Unix Makefiles" \
+        -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/clang \
+        -DCMAKE_MODULE_PATH=$THIRD_PARTY_DIR/cmake/usr/local/share/cmake-3.23/Modules/ \
+        ../llvm 
+    make 
+    make install
 }
 
 mkdir -p $THIRD_PARTY_DIR/build
@@ -38,16 +47,7 @@ build_ffmpeg
 
 git clone --depth=1 https://github.com/llvm/llvm-project.git
 cd llvm-project 
-mkdir build
-cd build 
-cmake \
-    -DLLVM_ENABLE_PROJECTS=clang \
-    -G "Unix Makefiles" \
-    -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/clang \
-    -DCMAKE_MODULE_PATH=$THIRD_PARTY_DIR/cmake/usr/local/share/cmake-3.23/Modules/ \
-    ../llvm 
-make 
-make install
+build_clang
 cd ../
 
 
