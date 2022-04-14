@@ -20,7 +20,6 @@ pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
 )
 
 
-
 set(SOURCES 
     src/cmd/ArgumentParser.cpp
 
