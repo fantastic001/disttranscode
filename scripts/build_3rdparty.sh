@@ -11,13 +11,13 @@ mkdir -p $THIRD_PARTY_DIR/gcc
 
 function setup_toolchain() {
     pushd .
-    gcc_version=7.1.0
-    wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2
-    wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2.sig
+    gcc_version=11.1.0
+    wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz
+    wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz.sig
     wget https://ftp.gnu.org/gnu/gnu-keyring.gpg
-    signature_invalid=`gpg --verify --no-default-keyring --keyring ./gnu-keyring.gpg gcc-${gcc_version}.tar.bz2.sig`
+    signature_invalid=`gpg --verify --no-default-keyring --keyring ./gnu-keyring.gpg gcc-${gcc_version}.tar.gz.sig`
     if [ $signature_invalid ]; then echo "Invalid signature" ; exit 1 ; fi
-    tar -xvjf gcc-${gcc_version}.tar.bz2
+    tar -xf gcc-${gcc_version}.tar.gz
     cd gcc-${gcc_version}
     ./contrib/download_prerequisites
     cd ..
