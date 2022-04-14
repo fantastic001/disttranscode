@@ -15,7 +15,7 @@ function build_ffmpeg() {
 
 
 function build_cmake() {
-    bootstrap 
+    ./bootstrap 
     make 
     make install DESTDIR=$THIRD_PARTY_DIR/cmake
 }
