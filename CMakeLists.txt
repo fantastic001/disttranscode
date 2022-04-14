@@ -4,6 +4,7 @@ project (DistTranscode)
 
 find_package(Threads REQUIRED)
 
+set(CMAKE_CXX_STANDARD 17)
 
 enable_testing()
 find_package(MPI REQUIRED)
