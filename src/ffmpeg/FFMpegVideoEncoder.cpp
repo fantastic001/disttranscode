@@ -85,9 +85,7 @@ shared_ptr<FFMpegVideoSegment> FFMpegVideoEncoder::getSegment() {
         fprintf(stderr, "Could not open codec\n");
         exit(1);
     }
-    vector<int> position;
-    position.resize(2);
-        
+
     for (auto m_frame : frames) {
         auto pkt = av_packet_alloc();
         if (!pkt)
@@ -111,7 +109,11 @@ shared_ptr<FFMpegVideoSegment> FFMpegVideoEncoder::getSegment() {
         if (ret < 0)
             exit(1);
         
+        #pragma omp parallel for 
         for (int channel = 0; channel < m_frame->getChannelCount(); channel++) {
+            // optimization - allocating vector every time we call pos2d is too expensive 
+            std::vector<int> position;
+            position.resize(2);
             int k = channel == 0 ? 1 : 2;
             for (position[0] = 0; position[0] < c->height/k; position[0]++) {
                 for (position[1] = 0; position[1] < c->width/k; position[1]++) {

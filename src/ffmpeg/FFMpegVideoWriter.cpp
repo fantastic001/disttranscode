@@ -103,9 +103,7 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
 
     }
 
-    // optimization - allocating vector every time we call pos2d is too expensive 
-    std::vector<int> position;
-    position.resize(2);
+
 
     ret = av_frame_make_writable(frame);
     if (ret < 0)
@@ -117,7 +115,11 @@ void FFMpegVideoWriter::writeFrame(FramePtr m_frame) {
         frame.
         */
     /* Y */
+    #pragma omp parallel for 
     for (int channel = 0; channel < m_frame->getChannelCount(); channel++) {
+        // optimization - allocating vector every time we call pos2d is too expensive 
+        std::vector<int> position;
+        position.resize(2);
         int k = channel == 0 ? 1 : 2;
         for (position[0] = 0; position[0] < c->height/k; position[0]++) {
             for (position[1] = 0; position[1] < c->width/k; position[1]++) {

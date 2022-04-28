@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 find_package(MPI REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(OpenMP REQUIRED)
+
 
 pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
     libavdevice
@@ -70,6 +72,7 @@ foreach(utility ${UTILITIES})
     endif(${MPI_FOUND})
 
     target_link_libraries(${utility} PUBLIC PkgConfig::LIBAV )
+    target_link_libraries(${utility} PRIVATE OpenMP::OpenMP_CXX)
 
 endforeach(utility ${UTILITIES})
 
@@ -87,7 +90,10 @@ if(${MPI_FOUND})
 endif(${MPI_FOUND})
 
 target_link_libraries(disttranscode PUBLIC PkgConfig::LIBAV )
+target_link_libraries(disttranscode PRIVATE OpenMP::OpenMP_CXX)
+
 target_link_libraries(testDisttranscode PUBLIC PkgConfig::LIBAV )
+target_link_libraries(testDisttranscode PRIVATE OpenMP::OpenMP_CXX)
 
 include_directories(PUBLIC include/)
 set(CMAKE_BUILD_TYPE Debug)
