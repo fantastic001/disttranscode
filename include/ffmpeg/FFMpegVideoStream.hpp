@@ -15,7 +15,7 @@ extern "C" {
 
 namespace dtcode::ffmpeg {
     class FFMpegVideoStream : public ::dtcode::data::Stream {
-        AVCodec *codec;
+        const AVCodec *codec;
         AVCodecParserContext *parser;
         AVCodecContext *c= NULL;
         std::vector<uint8_t> serialized_data;
