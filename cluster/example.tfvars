@@ -18,7 +18,7 @@
 # GENERAL #
 ###########
 
-project_id = "<PROJECT_ID>"
+project_id = "cloudpost-test"
 
 slurm_cluster_name = "basic"
 
