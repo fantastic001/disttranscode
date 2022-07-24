@@ -36,8 +36,10 @@ Measurements of the job
 
 # Measurements 
 
+The following table shows some measurements of performance for sample video 
+
 | Number of nodes | Time         |
-|--------------------------------|
+|-----------------|--------------|
 | 1               | 00:11:41     |
 | 2               | 00:11:44     |
 | 3               | 00:07:45     |
